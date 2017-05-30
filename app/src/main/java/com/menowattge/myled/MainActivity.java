@@ -452,7 +452,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
 
 
-    private BluetoothGatt mGatt;   // da spostare
+    private BluetoothGatt mGatt;   // da spostare ok
 
 
 

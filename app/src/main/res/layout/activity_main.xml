@@ -7,7 +7,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.example.joelwasserman.androidbletutorial.MainActivity">
+    tools:context="com.menowattge.myled.MainActivity">
 
     <TextView
         android:layout_width="wrap_content"
@@ -48,7 +48,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Connect"
-        android:layout_alignTop="@+id/StartScanButton"
+        android:layout_alignBottom="@+id/StopScanButton"
         android:layout_alignParentStart="true" />
 
     <Button
@@ -58,5 +58,14 @@
         android:text="Disconnect"
         android:layout_alignBottom="@+id/StopScanButton"
         android:layout_alignParentEnd="true" />
+
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button2"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="10dp"
+        android:text="Send" />
 
 </RelativeLayout>

@@ -46,6 +46,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks {
 
@@ -60,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     Button stopScanningButton;
     Button connectButton;
     Button disconnectButton;
+    Button sendButton;
     TextView peripheralTextView;
     private final static int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
@@ -99,24 +101,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
         //pulsante per connettersi al dispositivo
         connectButton = (Button) findViewById(R.id.button2);
-     //   connectButton.setOnClickListener(new View.OnClickListener(){
-       //     @Override
-         //   public void onClick(View v) {
-               // connecT();    LO GESTISCO NELLA CALLBACK PRINCIPALE
-           // }
-        //});
 
         //pulsante per disconnettersi dal dispositivo
-        disconnectButton = (Button)findViewById(R.id.button3);
-//        disconnectButton.setOnClickListener(new View.OnClickListener(){
-  //          @Override
-    //        public void onClick(View v){
-      //          //disConnect();   LO GESTISCO NELLA CB PRINCIPALE
-        //    }
-        //});
+        disconnectButton = (Button) findViewById(R.id.button3);
+
+        //pulsante per inviare dati al dispositivo
+        sendButton = (Button) findViewById(R.id.button4);
+
 
         //devo passare attraverso il manager e l'adapter per poter utilizzare lo scanner
-        btManager = (BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
+        btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
 
         CheckPermission();
@@ -125,21 +119,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
 
     @Override
-    protected void onResume(){
+    protected void onResume() {
         super.onResume();
         //gps
-            //genero a runtime un intero random per evitare il crash dovuto all'utilizzo dello stesso GoogleApiClientId
-            Random rand = new Random();
-            int maxGapiClientId = 50000;
-            int minGapiClientId = 1;
-            int gapiClientId = rand.nextInt(maxGapiClientId)+minGapiClientId;
+        //genero a runtime un intero random per evitare il crash dovuto all'utilizzo dello stesso GoogleApiClientId
+        Random rand = new Random();
+        int maxGapiClientId = 50000;
+        int minGapiClientId = 1;
+        int gapiClientId = rand.nextInt(maxGapiClientId) + minGapiClientId;
 
-            //creo l'oggetto poi lo passo al metodo sottostante che controlla lo stato del GPS
-            GoogleApiClient gapiClient = setGoogleApiClient(gapiClientId);
-            locationChecker(gapiClient,MainActivity.this);
+        //creo l'oggetto poi lo passo al metodo sottostante che controlla lo stato del GPS
+        GoogleApiClient gapiClient = setGoogleApiClient(gapiClientId);
+        locationChecker(gapiClient, MainActivity.this);
 
         //bt
-            ActivateBluetooth(btAdapter);
+        ActivateBluetooth(btAdapter);
 
     }
 
@@ -147,15 +141,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     /*
      *
+     * --------------------------------------------------------------------------------------------------------------------
+     *
                         INIZIO SEZIONE DEDICATA ALLE CONNESSIONI BLUETOOTH E GPS
+     *
+     * --------------------------------------------------------------------------------------------------------------------
      *
      */
 
 
     // metodo che crea l'oggetto per poter comunicare all'utente di dover attivare il GPS internamente all'app
-    public  GoogleApiClient setGoogleApiClient(int gapiClientId) {
+    public GoogleApiClient setGoogleApiClient(int gapiClientId) {
 
-            GoogleApiClient mGoogleApiClient = new GoogleApiClient
+        GoogleApiClient mGoogleApiClient = new GoogleApiClient
                 .Builder(this)
                 .enableAutoManage(this, gapiClientId, this)
                 .addApi(LocationServices.API)
@@ -169,17 +167,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     //metodo che propone all'utente di attivare il bt --onResume()--
     public void ActivateBluetooth(BluetoothAdapter btAdapter) {
 
-            if (btAdapter != null && !btAdapter.isEnabled()) {
-                Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-            }
+        if (btAdapter != null && !btAdapter.isEnabled()) {
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+        }
     }
 
     //metodo che,all'installazione e primo avvio dell'app,chiede i permessi per poter utilizzare il GPS --onCreate()--
-    public void CheckPermission(){
+    public void CheckPermission() {
 
-        if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-        {
+        if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("This app needs location access");
             builder.setMessage("Please grant location access so this app can detect peripherals.");
@@ -188,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 @Override
                 public void onDismiss(DialogInterface dialog) {
                     //   requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
-                    requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},PERMISSION_REQUEST_FINE_LOCATION);
+                    requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
                 }
             });
             builder.show();
@@ -198,6 +195,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     /**
      * Prompt user to enable GPS and Location Services
+     *
      * @param mGoogleApiClient
      * @param activity
      */
@@ -243,7 +241,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     }
 
 
-
     // Override del metodo che gestisce i permessi accordati dall'utente
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -276,7 +273,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     /*
      *
-                            - FINE - SEZIONE DEDICATA ALLE CONNESSIONI BLUETOOTH E GPS
+     * --------------------------------------------------------------------------------------------------------------------
+     *
+                                    - FINE - SEZIONE DEDICATA ALLE CONNESSIONI BLUETOOTH E GPS
+     *
+     * --------------------------------------------------------------------------------------------------------------------
      *
      */
 
@@ -289,7 +290,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     /*
      *
-                        INIZIO SEZIONE DEDICATA ALLA SCANSIONE
+     * --------------------------------------------------------------------------------------------------------------------
+     *
+                                            INIZIO SEZIONE DEDICATA ALLA SCANSIONE
+     *
+     * --------------------------------------------------------------------------------------------------------------------
      *
      */
 
@@ -299,13 +304,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
 
-            String device = "\n"+"Device Name : " + result.getDevice().getName()  ;
-            String rssi = " - RSSI : " + result.getRssi()+"\n";
-            String scanRecord = " \n- INFO PER ORA INUTILI -\n\n"+result.getScanRecord();
-            String deviceAddress = "Device Address : "+result.getDevice();
+            String device = "\n" + "Device Name : " + result.getDevice().getName();
+            String rssi = " - RSSI : " + result.getRssi() + "\n";
+            String scanRecord = " \n- INFO PER ORA INUTILI -\n\n" + result.getScanRecord();
+            String deviceAddress = "Device Address : " + result.getDevice().getAddress();
 
-            final BluetoothDevice btDevice = result.getDevice();
-
+           // final BluetoothDevice btDevice = result.getDevice();
+            // sembra indifferente l'utilizzo dell'uno o dell'altro
+            final BluetoothDevice devProva = btAdapter.getRemoteDevice(result.getDevice().getAddress());
 
             peripheralTextView.setTextSize(18);
             peripheralTextView.setTextColor(Color.parseColor("#cc0000"));
@@ -319,47 +325,46 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             peripheralTextView.append("\n-------------------------------------------");
 
             mGatt = null;
-           // connectToDevice(btDevice);
+            // connectToDevice(btDevice);  mi connetto al click,non in automatico
 
-                connectButton.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View v) {
-                        AsyncTask.execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                connectToDevice(btDevice);
+            connectButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    AsyncTask.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                          //  connectToDevice(btDevice);
+                            connectToDevice(devProva);
 
-                            }
-                        });
+                        }
+                    });
 
-                    }
-                });
+                }
+            });
 
-                disconnectButton.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View v){
+            disconnectButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
 
-                        AsyncTask.execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                BluetoothGatt btGatt = connectToDevice(btDevice);
+                    AsyncTask.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                          //  BluetoothGatt btGatt = connectToDevice(btDevice);
+                            BluetoothGatt btGatt = connectToDevice(devProva);
 
-                                discConnectToDevice(btGatt);
-
-                            }
-                        });
-                    }
-                });
+                            discConnectToDevice(btGatt);
 
 
+                        }
+                    });
+                }
+            });
 
 
         }
 
 
     };
-
-
 
 
     // da spostare sopra dove dichiaro le altre var ma per ora è qui per comodità
@@ -374,7 +379,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         //se non trova nulla stampa a video
         peripheralTextView.setText("NO BLE DEVICES FOUND");
 
-     // task che avvia la scansione
+        // task che avvia la scansione
         AsyncTask.execute(new Runnable() {
 
             @Override
@@ -383,10 +388,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 btScanner = btAdapter.getBluetoothLeScanner();
                 btScanner.startScan(leScanCallback);
             }
-        } );
+        });
 
 
-    //maniglia che stoppa la scansione in automatico  dopo 10 secondi
+        //maniglia che stoppa la scansione in automatico  dopo 10 secondi
         handLer.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -400,13 +405,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             }
         }, SCAN_PERIOD);
 
-}
-
+    }
 
 
     public void stopScanning() {
 
-        peripheralTextView.append("\n\n"+"Stopped Scanning");
+        peripheralTextView.append("\n\n" + "Stopped Scanning");
         startScanningButton.setVisibility(View.VISIBLE);
         stopScanningButton.setVisibility(View.INVISIBLE);
 
@@ -418,8 +422,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         });
 
     }
-
-
 
 
     // metodi delle interfacce
@@ -444,28 +446,30 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     /*
      *
-                        FINE SEZIONE DEDICATA ALLA SCANSIONE
+     * --------------------------------------------------------------------------------------------------------------------
+     *
+                                            FINE SEZIONE DEDICATA ALLA SCANSIONE
+     *
+     * --------------------------------------------------------------------------------------------------------------------
      *
      */
 
 
 
 
+    private final static String TAG = MainActivity.class.getSimpleName();
 
-    private BluetoothGatt mGatt;   // da spostare ok
-
+    private BluetoothGatt mGatt;
+    private BluetoothGattCharacteristic mWriteCharacteristic;
 
 
     // inizia la procedura di connessione
     public BluetoothGatt connectToDevice(BluetoothDevice device) {
       if (mGatt == null) {
-            mGatt = device.connectGatt(this, false, gattCallback);  //non riesco a riconnettermi-only once
-
-        }
-
-    return mGatt;  // AGGIUNTO OGGI COSI' LO PASSO A QUESTO QUI SOTTO
+            mGatt = device.connectGatt(this, false, gattCallback);
+      }
+        return mGatt;  // AGGIUNTO OGGI COSI' LO PASSO A QUESTO QUI SOTTO
     }
-
 
     public void discConnectToDevice(BluetoothGatt mGatt) {
         mGatt.disconnect();
@@ -473,18 +477,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
 
 
+
+
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            Log.i("onConnectionStateChange", "Status: " + status); // if (status==0){connesso}
             switch (newState) {
+
                 case BluetoothProfile.STATE_CONNECTED:
+                    Log.i(TAG, "Connected to GATT server.");
+                    Log.i(TAG, "Attempting to start service discovery:" + mGatt.discoverServices());
                     Log.i("gattCallback", "STATE_CONNECTED");
-                    gatt.discoverServices();
-                    System.out.println("GATT-SERVICES : "+gatt.getServices());
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED:
                     Log.e("gattCallback", "STATE_DISCONNECTED");
+                    Log.i(TAG, "Disconnected from GATT server.");
                     break;
                 default:
                     Log.e("gattCallback", "STATE_OTHER");
@@ -493,39 +500,172 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         }
 
         @Override
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            List<BluetoothGattService> services = gatt.getServices();
-            Log.i("onServicesDiscovered", services.toString());
+        public void onServicesDiscovered(final BluetoothGatt gatt, int status) {
+           List<BluetoothGattService> services = gatt.getServices();
+            // Log.i("onServicesDiscovered", services.toString());
 
-            gatt.readCharacteristic(services.get(1).getCharacteristics().get(0));
+           // gatt.readCharacteristic(services.get(1).getCharacteristics().get(0));
+
+            final UUID uuId = services.get(1).getUuid();
+            final UUID charUuid = services.get(1).getCharacteristics().get(0).getUuid();
+            final byte[] byteArray = {1,2,3};  //0001,0010,0011
+
+            readCharacteristic(uuId,charUuid);
+
+            sendButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                    writeCharacteristic(uuId,charUuid,byteArray);
+                }
+            });
 
         }
 
+
+
+
+
         @Override
-        public void onCharacteristicRead( BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
+        public void onCharacteristicRead(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
             Log.i("onCharacteristicRead", characteristic.toString());
 
+            final byte[] characteristicValue = characteristic.getValue();
+            final UUID uuId = characteristic.getUuid();
+
+
             try {
-
-                    System.out.println("CHAR-UUID : "+characteristic.getUuid());
-
+                System.out.println("CHAR-UUID : " + uuId);
                 //permette di eseguire il task senza cagature di cazzo
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        peripheralTextView.append("\n\nCHARACTERISTIC : "  +characteristic.getUuid());
+                        peripheralTextView.append("\n\nCHARACTERISTIC : " + uuId);
+
+
                     }
                 });
 
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            // gatt.disconnect();
 
-                } catch (Exception e) {e.printStackTrace();}
 
 
-           // gatt.disconnect();
+            // QUI GESTISCO L'INVIO DEI DATI HO COMMENTATO PERCHE VEDO SE USARE I METODI IN FONDO
 
+    /*       sendButton.setOnClickListener(new View.OnClickListener() {
+               @Override
+               public void onClick(View v) {
+
+                   AsyncTask.execute(new Runnable() {
+                       @Override
+                       public void run() {
+
+
+                           if (((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE) |
+                                   (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)) > 0) {
+                               // writing characteristic functions
+                               mWriteCharacteristic = characteristic;
+                           }
+
+
+
+                           // "str" is the string or character you want to write
+
+                           byte[] valueToWrite = mWriteCharacteristic.getValue();
+                           mWriteCharacteristic.setValue(valueToWrite);
+
+                           boolean successfullyWritten = gatt.writeCharacteristic(mWriteCharacteristic);
+
+
+                           if (successfullyWritten) {
+                               System.out.println("CHARACTERISTIC WRITTEN");
+
+                           }
+
+
+                       }
+                   });
+
+
+               }
+           });
+*/
 
         }
+
+
+
+
     };
+
+
+//versione più ordinata di quanto eseguo grezzamente in onServiceDiscovered
+    public boolean readCharacteristic(UUID gatservice_uuid, UUID char_uuid){
+
+
+            try{
+                //if(mBluetoothGatt==null || mBluetoothGattServiceList==null) return false;
+                BluetoothGattService bgs = mGatt.getService(gatservice_uuid);
+                if(bgs==null) return false;
+                BluetoothGattCharacteristic bgc = bgs.getCharacteristic(char_uuid);
+                if(bgc==null) return false;
+                int properties = bgc.getProperties();
+                if(((properties&BluetoothGattCharacteristic.PROPERTY_READ ) == BluetoothGattCharacteristic.PROPERTY_READ ))
+                {
+                    return mGatt.readCharacteristic(bgc);
+
+                }else{
+                    Log.e(gatservice_uuid+"->"+char_uuid," can not read !");
+                    return false;
+                }
+            }catch(Exception ex){
+                return false ;
+            }
+
+    }
+
+    //versione ordinata di quanto gestisco con il tasto invio dati
+    // vedere quale è migliore
+
+    public boolean writeCharacteristic(UUID gatservice_uuid,UUID char_uuid,byte[] value){
+
+            try{
+                //if(mBluetoothGatt==null || mBluetoothGattServiceList==null) return false;
+                BluetoothGattService bgs = mGatt.getService(gatservice_uuid);
+                if(bgs==null){
+                    Log.e("BGS:"+bgs+"->"," can not find ! write error");
+                    return false;
+                }
+                BluetoothGattCharacteristic bgc = bgs.getCharacteristic(char_uuid);
+                    Log.i("BGS","OK");
+                if(bgc==null) {
+                    Log.e("BGC:"+bgc+"->"," can not find ! write error");
+                    return false;
+                }
+                int properties = bgc.getProperties();
+                    Log.i("BGC","OK");
+                if( ( ( properties&BluetoothGattCharacteristic.PROPERTY_WRITE ) == BluetoothGattCharacteristic.PROPERTY_WRITE )
+                        || ( ( properties&BluetoothGattCharacteristic.PROPERTY_SIGNED_WRITE ) == BluetoothGattCharacteristic.PROPERTY_SIGNED_WRITE )
+                        || ( ( properties&BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE ) == BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE ) )
+                {
+                    bgc.setValue(value);
+                    Log.i("WRITE","done");
+                    return mGatt.writeCharacteristic(bgc);
+
+
+                }else{
+                    Log.e(gatservice_uuid+"->",char_uuid+" can not write !");
+                    return false;
+                }
+            }catch(Exception ex){
+                    Log.e("WRITECHAR_ERROR","writeCharacteristic mBluetoothGatt dead ");
+
+                return false ;
+            }
+        }
 
 
 

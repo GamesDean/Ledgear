@@ -18,17 +18,18 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,6 +45,7 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -63,10 +65,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
     Button disconnectButton;
     Button sendButton;
     TextView peripheralTextView;
+    TextView bleDevices;
+    TextView counter;
+    ListView listView;
+    ArrayAdapter adapter;
+    ArrayList recentlySeen;
     private final static int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
-
+    boolean flaG = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,9 +85,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
             finish();
         }
 
+        // lista che mostrerà a video i risultati della scansione
+        listView = (ListView) findViewById(R.id.listView);
+        adapter=new ArrayAdapter<>(this, android.R.layout.simple_list_item_2);
+        bleDevices = (TextView) findViewById(R.id.textView);
+        counter = (TextView) findViewById(R.id.counter);
         //textview per visualizzare i dati,con scroll laterale. MEGLIO UNA LISTA
-        peripheralTextView = (TextView) findViewById(R.id.PeripheralTextView);
-        peripheralTextView.setMovementMethod(new ScrollingMovementMethod());
+      //  peripheralTextView = (TextView) findViewById(R.id.PeripheralTextView);
+     //   peripheralTextView.setMovementMethod(new ScrollingMovementMethod());
 
         //pulsanti sovrapposti per avviare e terminare la scansione
         startScanningButton = (Button) findViewById(R.id.StartScanButton);
@@ -100,13 +112,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         stopScanningButton.setVisibility(View.INVISIBLE);
 
         //pulsante per connettersi al dispositivo
-        connectButton = (Button) findViewById(R.id.button2);
+      //  connectButton = (Button) findViewById(R.id.button2);
 
         //pulsante per disconnettersi dal dispositivo
-        disconnectButton = (Button) findViewById(R.id.button3);
+       // disconnectButton = (Button) findViewById(R.id.button3);
 
         //pulsante per inviare dati al dispositivo
-        sendButton = (Button) findViewById(R.id.button4);
+       // sendButton = (Button) findViewById(R.id.button4);
 
 
         //devo passare attraverso il manager e l'adapter per poter utilizzare lo scanner
@@ -252,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("Funzionalità Limitata");
-                    builder.setMessage("Since location access has not been granted, this app will not be able to discover beacons when in the background.");
+                    builder.setMessage("Permessi non concessi, l'app non sarà in grado di scandire la rete e trovare dispositivi in background.");
                     builder.setPositiveButton(android.R.string.ok, null);
                     builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
 
@@ -299,33 +311,70 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
      */
 
     // Device scan callback
+    int i=0;
+    String rssi = "";
+    String device = "";
+
     private ScanCallback leScanCallback = new ScanCallback() {
 
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
 
-            String device = "\n" + "Device Name : " + result.getDevice().getName();
-            String rssi = " - RSSI : " + result.getRssi() + "\n";
-            String scanRecord = " \n- INFO PER ORA INUTILI -\n\n" + result.getScanRecord();
-            String deviceAddress = "Device Address : " + result.getDevice().getAddress();
+            device = "\n" + "Device Name : " + result.getDevice().getName();
+            rssi = " - RSSI : " + result.getRssi() + "\n";
+
+
 
            // final BluetoothDevice btDevice = result.getDevice();
             // sembra indifferente l'utilizzo dell'uno o dell'altro
             final BluetoothDevice devProva = btAdapter.getRemoteDevice(result.getDevice().getAddress());
 
-            peripheralTextView.setTextSize(18);
-            peripheralTextView.setTextColor(Color.parseColor("#cc0000"));
 
 
-            peripheralTextView.setText(device);
-            peripheralTextView.append(rssi);
-            peripheralTextView.append(deviceAddress);
-            peripheralTextView.append("\n-------------------------------------------");
-            peripheralTextView.append(scanRecord);
-            peripheralTextView.append("\n-------------------------------------------");
+            //aggiungo nuovi device ai recenti,ad ogni iterazione della callback
+            recentlySeen = new ArrayList();
+            recentlySeen.add(device);
 
+
+            System.out.println("RSSI : "+rssi);
+            System.out.println("ITERAZIONI : "+i);
+
+
+            //aggiungo agli ufficiali alla prima iterazione o se l'adapter è vuoto
+            if (i==0 || adapter.isEmpty()) {
+                adapter.add(device);
+                listView.setAdapter(adapter);
+            }
+            //successive iterazioni se NON già presente nell'adapter,lo aggiungo
+            if (!(adapter.equals(recentlySeen.contains(device))) ){
+                    listView.setAdapter(adapter);
+                }
+            //
+            if(!device.isEmpty()) {
+                bleDevices.setText("Devices Found");
+
+                handLer.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        bleDevices.setText("Press scan");
+                        //svuoto i valori di "rssi" per poter effettuare i controlli allo start
+                        rssi ="";
+                    }
+                }, SCAN_PERIOD);
+            }
+
+
+
+
+            //fondamentale
             mGatt = null;
+
+
             // connectToDevice(btDevice);  mi connetto al click,non in automatico
+
+       /*
+
+       //COMMENTO I PULSANTI,CIO' CHE AVVIENE QUI VERRA' GESTITO NELLA LISTA O AL DROPDOWN O IN UN'ALTRA ACTIVITY
 
             connectButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -359,25 +408,57 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                     });
                 }
             });
-
+        */
 
         }
 
 
     };
 
+    // contatore,appare un countdown di 10 sec
+    public void counTer() {
+        new CountDownTimer(SCAN_PERIOD, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                counter.setText("wait: " + millisUntilFinished / 1000);
+            }
+
+            public void onFinish() {
+                counter.setText("ready!");
+            }
+        }.start();
+    }
 
     // da spostare sopra dove dichiaro le altre var ma per ora è qui per comodità
     private Handler handLer = new Handler();
-    private static final long SCAN_PERIOD = 3000; // timeout 10 secondi - messo 3 per comodità
+    private static final int SCAN_PERIOD = 10000; // timeout 10 secondi - messo 3 per comodità
 
 
     public void startScanning() {
 
         startScanningButton.setVisibility(View.INVISIBLE);
         stopScanningButton.setVisibility(View.VISIBLE);
-        //se non trova nulla stampa a video
-        peripheralTextView.setText("NO BLE DEVICES FOUND");
+
+        counTer();
+
+        //alla pressione del tasto "scan" in primis ripulisco l'adapter
+        adapter.clear();
+
+        //tengo traccia delle iterazioni della callback DEBUG
+        i++;
+
+        //eseguo il controllo basandomi sull'rssi : se non presente,non ci sono device nel range
+        if (rssi.isEmpty()) {
+            bleDevices.setText("No BLE Devices");
+            handLer.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    bleDevices.setText("Press scan");
+
+                }
+            },SCAN_PERIOD);
+        }
+
 
         // task che avvia la scansione
         AsyncTask.execute(new Runnable() {
@@ -400,7 +481,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 startScanningButton.setVisibility(View.VISIBLE);
                 stopScanningButton.setVisibility(View.INVISIBLE);
                 // da rimuovere e magari far capire con uno spinner
-                peripheralTextView.append("\n \n ## Dopo 10 secondi la scansione si arresta ##".toUpperCase());
+          //      peripheralTextView.append("\n \n ## Dopo 10 secondi la scansione si arresta ##".toUpperCase());
 
             }
         }, SCAN_PERIOD);
@@ -410,7 +491,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     public void stopScanning() {
 
-        peripheralTextView.append("\n\n" + "Stopped Scanning");
+       // peripheralTextView.append("\n\n" + "Stopped Scanning");
         startScanningButton.setVisibility(View.VISIBLE);
         stopScanningButton.setVisibility(View.INVISIBLE);
 
@@ -540,7 +621,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        peripheralTextView.append("\n\nCHARACTERISTIC : " + uuId);
+                      //  peripheralTextView.append("\n\nCHARACTERISTIC : " + uuId);
 
 
                     }

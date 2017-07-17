@@ -2,6 +2,8 @@ package com.menowattge.myled;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -18,6 +20,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -27,6 +30,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -50,30 +54,49 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks {
+
+public  class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, CharacteristicFragment.OnFragmentInteractionListener {
 
     // implementando le interfacce di Google Api Client posso costruire un oggetto che mi permette di
     // poter avviare il gps direttamente dall'applicazione senza dover costringere l'utente ad effettuare questa
     // operazione manualmente.
-
+    Fragment covEr;
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
     BluetoothLeScanner btScanner;
-    Button startScanningButton;
+    static Button startScanningButton;
     Button stopScanningButton;
     Button connectButton;
     Button disconnectButton;
     Button sendButton;
+
     TextView peripheralTextView;
+
     TextView bleDevices;
     TextView counter;
     ListView listView;
     ArrayAdapter adapter;
     ArrayList recentlySeen;
+    private boolean stoP=true;
+    private boolean starT=false;
+    private int i=0;
+    private String rssi = "";
+    private String device = "";
+    private Handler handLer = new Handler();
+    private static final int SCAN_PERIOD = 10000;
     private final static int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
-    boolean flaG = false;
+
+
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        getFragmentManager().popBackStack();
+        startScanningButton.setVisibility(View.VISIBLE);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
         // lista che mostrerà a video i risultati della scansione
         listView = (ListView) findViewById(R.id.listView);
-        adapter=new ArrayAdapter<>(this, android.R.layout.simple_list_item_2);
+        adapter=new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
         bleDevices = (TextView) findViewById(R.id.textView);
         counter = (TextView) findViewById(R.id.counter);
         //textview per visualizzare i dati,con scroll laterale. MEGLIO UNA LISTA
@@ -112,6 +135,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         stopScanningButton.setVisibility(View.INVISIBLE);
 
         //pulsante per connettersi al dispositivo
+
+
       //  connectButton = (Button) findViewById(R.id.button2);
 
         //pulsante per disconnettersi dal dispositivo
@@ -128,6 +153,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         CheckPermission();
 
     }
+
+
 
 
     @Override
@@ -311,40 +338,40 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
      */
 
     // Device scan callback
-    int i=0;
-    String rssi = "";
-    String device = "";
+    BluetoothDevice devProva=null;
+
 
     private ScanCallback leScanCallback = new ScanCallback() {
 
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
-
-            device = "\n" + "Device Name : " + result.getDevice().getName();
-            rssi = " - RSSI : " + result.getRssi() + "\n";
+            String name = "Device Name : ";
+            device = "\n" + name + result.getDevice().getName();
+            rssi = " -- RSSI : " + result.getRssi() + "\n";
 
 
 
            // final BluetoothDevice btDevice = result.getDevice();
             // sembra indifferente l'utilizzo dell'uno o dell'altro
-            final BluetoothDevice devProva = btAdapter.getRemoteDevice(result.getDevice().getAddress());
+            devProva = btAdapter.getRemoteDevice(result.getDevice().getAddress());
 
 
 
             //aggiungo nuovi device ai recenti,ad ogni iterazione della callback
             recentlySeen = new ArrayList();
-            recentlySeen.add(device);
+            recentlySeen.add(device+rssi);
+            // recentlySeen.add(rssi);
 
-
-            System.out.println("RSSI : "+rssi);
-            System.out.println("ITERAZIONI : "+i);
-
+          //  System.out.println("RSSI : "+rssi);
+           // System.out.println("ITERAZIONI : "+i);
 
             //aggiungo agli ufficiali alla prima iterazione o se l'adapter è vuoto
             if (i==0 || adapter.isEmpty()) {
-                adapter.add(device);
+                adapter.add(device+rssi);
+               // adapter.add(rssi);
                 listView.setAdapter(adapter);
             }
+
             //successive iterazioni se NON già presente nell'adapter,lo aggiungo
             if (!(adapter.equals(recentlySeen.contains(device))) ){
                     listView.setAdapter(adapter);
@@ -363,11 +390,32 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 }, SCAN_PERIOD);
             }
 
-
-
-
             //fondamentale
             mGatt = null;
+
+
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                    covEr = new CharacteristicFragment();
+                    FragmentTransaction transaction=getFragmentManager().beginTransaction();
+                    transaction.replace(R.id.fragment_container,covEr); // give your fragment container id in first parameter
+                    transaction.addToBackStack(null);  // if written, this transaction will be added to backstack
+                    transaction.commit();
+                    stopScanningButton.setVisibility(View.INVISIBLE);
+                    startScanningButton.setVisibility(View.INVISIBLE);
+
+
+
+
+                }
+            });
+
+
+
+
+
 
 
             // connectToDevice(btDevice);  mi connetto al click,non in automatico
@@ -415,23 +463,43 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     };
 
+
+
+
+     CountDownTimer countdown = null;
+
     // contatore,appare un countdown di 10 sec
-    public void counTer() {
-        new CountDownTimer(SCAN_PERIOD, 1000) {
+    public void counTer(boolean flaG) {
+    //se passo start(false)
+        if(!flaG) {
 
-            public void onTick(long millisUntilFinished) {
-                counter.setText("wait: " + millisUntilFinished / 1000);
-            }
+            countdown = new CountDownTimer(SCAN_PERIOD, 1000) {
 
-            public void onFinish() {
-                counter.setText("ready!");
-            }
-        }.start();
+                public void onTick(long millisUntilFinished) {
+                        counter.setText("wait: " + millisUntilFinished / 1000);
+                }
+
+                public void onFinish() {
+                    counter.setText("ready");
+                }
+
+
+            }.start();
+
+        }
+        //se passo stop(true)
+        else if (flaG){
+            countdown.cancel();
+            countdown.onFinish();
+        }
+
+
     }
 
+
+
     // da spostare sopra dove dichiaro le altre var ma per ora è qui per comodità
-    private Handler handLer = new Handler();
-    private static final int SCAN_PERIOD = 10000; // timeout 10 secondi - messo 3 per comodità
+     // timeout 10 secondi
 
 
     public void startScanning() {
@@ -439,7 +507,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
         startScanningButton.setVisibility(View.INVISIBLE);
         stopScanningButton.setVisibility(View.VISIBLE);
 
-        counTer();
+        //avvia il contatore
+        counTer(starT);
 
         //alla pressione del tasto "scan" in primis ripulisco l'adapter
         adapter.clear();
@@ -480,8 +549,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
                 btScanner.stopScan(leScanCallback);
                 startScanningButton.setVisibility(View.VISIBLE);
                 stopScanningButton.setVisibility(View.INVISIBLE);
-                // da rimuovere e magari far capire con uno spinner
-          //      peripheralTextView.append("\n \n ## Dopo 10 secondi la scansione si arresta ##".toUpperCase());
 
             }
         }, SCAN_PERIOD);
@@ -491,14 +558,27 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
     public void stopScanning() {
 
-       // peripheralTextView.append("\n\n" + "Stopped Scanning");
         startScanningButton.setVisibility(View.VISIBLE);
         stopScanningButton.setVisibility(View.INVISIBLE);
 
+        //uso thread asincrono
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 btScanner.stopScan(leScanCallback);
+                //innesto i thread,solo quello della UI può modificare gli oggetti a video
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        bleDevices.setText("Press scan");
+                        //stoppo il contatore
+                        counTer(stoP);
+
+                    }
+                });
+
+
+
             }
         });
 
@@ -535,7 +615,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
      *
      */
 
-
+    /*
+     *
+     * --------------------------------------------------------------------------------------------------------------------
+     *
+                                            INIZIO SEZIONE DEDICATA ALLA CONNESSIONE
+     *
+     * --------------------------------------------------------------------------------------------------------------------
+     *
+     */
 
 
     private final static String TAG = MainActivity.class.getSimpleName();
@@ -593,13 +681,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
             readCharacteristic(uuId,charUuid);
 
-            sendButton.setOnClickListener(new View.OnClickListener() {
+       /*     sendButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 
                     writeCharacteristic(uuId,charUuid,byteArray);
                 }
             });
+       */
 
         }
 
@@ -608,16 +697,22 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
 
         @Override
-        public void onCharacteristicRead(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, int status) {
+        public void onCharacteristicRead(final BluetoothGatt gatt,  final BluetoothGattCharacteristic characteristic, int status) {
             Log.i("onCharacteristicRead", characteristic.toString());
 
             final byte[] characteristicValue = characteristic.getValue();
-            final UUID uuId = characteristic.getUuid();
+            UUID  uuId = characteristic.getUuid();
 
 
             try {
                 System.out.println("CHAR-UUID : " + uuId);
-                //permette di eseguire il task senza cagature di cazzo
+                //permette di modificare la ui
+
+                android.app.FragmentManager fm = getFragmentManager();
+
+                CharacteristicFragment fragment = (CharacteristicFragment)fm.findFragmentById(R.id.fragment_container);
+                fragment.provA(uuId);
+                /*
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -626,6 +721,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
                     }
                 });
+                */
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -750,6 +846,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.O
 
 
 
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
+    }
 
 
 }

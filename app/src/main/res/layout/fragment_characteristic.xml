@@ -1,0 +1,39 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#333"
+    tools:context="com.menowattge.myled.CharacteristicFragment">
+
+    <!-- TODO: Update blank fragment layout, fare un ulteriore textview e centrarlo-->
+    <TextView
+        android:id="@+id/fragmentText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="40dp"
+        android:background="@color/colorMenowattge"
+        android:layout_marginBottom="350dp"
+        android:text="@string/hello_blank_fragment"
+        android:textColor="#ffffff"
+        android:textSize="25dp"
+        android:textAlignment="center"
+        />
+
+    <Button
+        android:id="@+id/button_close"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="200dp"
+        android:text="close" />
+
+    <ToggleButton
+        android:id="@+id/toggleButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Connect"
+        android:textOff="Connect"
+        android:textOn="Disconnect" />
+
+</FrameLayout>

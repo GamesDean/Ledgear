@@ -1,31 +1,25 @@
 package com.menowattge.myled;
 
 import android.app.Fragment;
-import android.bluetooth.BluetoothGatt;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
-import android.widget.ToggleButton;
-
-import java.util.UUID;
-
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link CharacteristicFragment.OnFragmentInteractionListener} interface
+ * {@link PresetFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link CharacteristicFragment#newInstance} factory method to
+ * Use the {@link PresetFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class CharacteristicFragment extends Fragment {
-
-
-
+public class PresetFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -34,20 +28,12 @@ public class CharacteristicFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    protected OnFragmentInteractionListener mListener;
+    protected Spinner spinner;
+    protected ArrayAdapter adapter;
+    protected Button buttonSend;
 
-    //chiude il fragment
-    //connect/disconnect
-    protected static ToggleButton disConnect;
-    private OnFragmentInteractionListener mListener;
-    protected TextView fragmentTextView;
-
-    //dichiarato per essere instanziato nel main
-    public void showUuid(UUID a){
-        fragmentTextView.setText("->Device Connesso<-"+"\n  UUID : "+a);
-
-    }
-
-    public CharacteristicFragment() {
+    public PresetFragment() {
         // Required empty public constructor
     }
 
@@ -57,11 +43,11 @@ public class CharacteristicFragment extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment CharacteristicFragment.
+     * @return A new instance of fragment PresetFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static CharacteristicFragment newInstance(String param1, String param2) {
-        CharacteristicFragment fragment = new CharacteristicFragment();
+    public static PresetFragment newInstance(String param1, String param2) {
+        PresetFragment fragment = new PresetFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -80,50 +66,57 @@ public class CharacteristicFragment extends Fragment {
 
     }
 
-     View view = null;
-
-
     @Override
-    public View onCreateView(final LayoutInflater inflater, final ViewGroup container,
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_preset, container, false);
 
+        //invisibili altrimenti randomicamente compaiono
+        MainActivity.startScanningButton.setVisibility(View.INVISIBLE);
+        MainActivity.stopScanningButton.setVisibility(View.INVISIBLE);
+        //bug infame,anche se non visibile,è cliccabile. così risolvo
+        CharacteristicFragment.disConnect.setClickable(false);
+        CharacteristicFragment.disConnect.setEnabled(false);
 
-        view = inflater.inflate(R.layout.fragment_characteristic, container, false);
+        buttonSend = (Button)view.findViewById(R.id.buttonSend);
 
-
-        fragmentTextView = (TextView) view.findViewById(R.id.fragmentText);
-        disConnect = (ToggleButton) view.findViewById(R.id.toggleButton);
-
-
-        disConnect.setOnClickListener(new View.OnClickListener() {
+        spinner = (Spinner)view.findViewById(R.id.spinner);
+        adapter = new ArrayAdapter<>(getActivity(),
+                                    android.R.layout.simple_spinner_dropdown_item,
+                                    new String[]{"Dimmeraggio 1","Dimmeraggio 2","Dimmeraggio 3","Dimmeraggio 4","Dimmeraggio 5"});
+        spinner.setAdapter(adapter);
+/*
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onClick(View v) {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(
+                        getActivity(),
+                        "hai selezionato ",
+                        Toast.LENGTH_LONG).show();
 
-                BluetoothGatt btGatt = ((MainActivity) getActivity()).connectToDevice(((MainActivity) getActivity()).devProva);
-                if(disConnect.isChecked()) {
-                    //mi connetto
-                    ((MainActivity) getActivity()).connectToDevice(((MainActivity) getActivity()).devProva);
+                Log.i("TOTTA","selezionato");
+            }
 
-                }
-                else if (!disConnect.isChecked()){
-                    //mi disconnetto
-                    ((MainActivity) getActivity()).discConnectToDevice(btGatt);
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
 
-                    //rimuove il fragment dallo stack come quando si preme il tasto "back"
-                    getFragmentManager().popBackStack();
-                    //deve tornare visibile
-                    MainActivity.startScanningButton.setVisibility(View.VISIBLE);
-                    //riesegue la scansione per ripopolare la lista
-                    ((MainActivity)getActivity()).startScanning();
-                }
             }
         });
 
-
+*/
         return view;
+
     }
+    @Override
+    public void onResume(){
+        super.onResume();
 
+        MainActivity.startScanningButton.setVisibility(View.INVISIBLE);
+        MainActivity.stopScanningButton.setVisibility(View.INVISIBLE);
+        CharacteristicFragment.disConnect.setClickable(false);
+        CharacteristicFragment.disConnect.setEnabled(false);
 
+    }
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
@@ -132,13 +125,9 @@ public class CharacteristicFragment extends Fragment {
         }
     }
 
-
-
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
         } else {

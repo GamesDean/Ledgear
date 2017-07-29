@@ -1,39 +1,50 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@mipmap/ge_frag"
+    android:layout_width="match_parent"
+    android:layout_marginBottom="20dp"
+    android:layout_height="match_parent">
+
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#333"
+    android:layout_marginTop="100dp"
+    android:layout_marginBottom="100dp"
+
+    android:background="#80b0b3b4"
     tools:context="com.menowattge.myled.CharacteristicFragment">
 
     <!-- TODO: Update blank fragment layout, fare un ulteriore textview e centrarlo-->
+
+
     <TextView
         android:id="@+id/fragmentText"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="40dp"
-        android:background="@color/colorMenowattge"
-        android:layout_marginBottom="350dp"
-        android:text="@string/hello_blank_fragment"
-        android:textColor="#ffffff"
-        android:textSize="25dp"
-        android:textAlignment="center"
-        />
 
-    <Button
-        android:id="@+id/button_close"
-        android:layout_width="100dp"
-        android:layout_height="50dp"
-        android:layout_gravity="center"
-        android:layout_marginTop="200dp"
-        android:text="close" />
+        android:layout_marginBottom="90dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_marginTop="60dp"
+        android:background="#95f4f6f7"
+        android:gravity="center"
+        android:text="@string/device_pronto_per_la_connessione"
+        android:textAlignment="center"
+        android:textColor="@color/colorMenowattge"
+        android:textSize="20sp" />
+
+
 
     <ToggleButton
         android:id="@+id/toggleButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
         android:layout_gravity="center"
-        android:text="Connect"
+        android:text="@string/connect"
         android:textOff="Connect"
-        android:textOn="Disconnect" />
+        android:textOn="@string/disconnect" />
 
 </FrameLayout>
+</RelativeLayout>

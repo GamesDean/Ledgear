@@ -8,7 +8,11 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.Spinner;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.util.UUID;
@@ -39,11 +43,39 @@ public class CharacteristicFragment extends Fragment {
     //connect/disconnect
     protected static ToggleButton disConnect;
     private OnFragmentInteractionListener mListener;
-    protected TextView fragmentTextView;
+    protected Spinner spinnerDue ;
+    protected ArrayAdapter adapter;
+    protected Button invia;
+
+    ProgressBar progressBarhorizontal;
+
+    protected String selezionaProgramma = "Seleziona un Programma";
+    protected String programmaUno = "Programma 1:23M2";
+    protected String programmaDue ="Programma 2:23M3";
+    protected String programmaTre = "Programma 3:22M2";
+    protected String programmaQuattro="Programma 4:22M3";
+    protected String programmaCinque="Programma 5:ERP";
+    protected String programmaSei="Programma 6:EMX";
+    protected String programmaSette="Programma 7:23EMP";
+    protected String programmaOtto="Programma 8:22EMP";
+    protected String programmaNove="Programma 9:23ERP";
+    protected String programmaDieci="Programma 10:22ERP";
+    protected String programmaUndici="Programma 11:23M2S2";
+    protected String programmaDodici="Programma 12:23M3S2";
+    protected String programmaTredici="Programma 13:22M2S2";
+    protected String programmaQuattordici="Programma 14:22M3S2";
+    protected String programmaQuindici="Programma 15:LSM2";
+    protected String programmaSedici="Programma 16:LSM3";
+    protected String programmaDiciassette="Programma 17:LSM2S2";
+    protected String programmaDiciotto="Programma 18:LSM3S2";
+    protected String programmaDiciannove="Programma 19:R400";
 
     //dichiarato per essere instanziato nel main
     public void showUuid(UUID a){
-        fragmentTextView.setText("->Device Connesso<-"+"\n  UUID : "+a);
+        Toast.makeText(getActivity(),"->Device Connesso<-"+"\n  UUID : "+a,Toast.LENGTH_LONG).show();
+        Toast.makeText(getActivity(),"seleziona un programma",Toast.LENGTH_LONG).show();
+        //spinner enabled ad avvenuta connessione
+        spinnerDue.setEnabled(true);
 
     }
 
@@ -90,9 +122,25 @@ public class CharacteristicFragment extends Fragment {
 
         view = inflater.inflate(R.layout.fragment_characteristic, container, false);
 
-
-        fragmentTextView = (TextView) view.findViewById(R.id.fragmentText);
+        invia = (Button)view.findViewById(R.id.buttonInvia);
         disConnect = (ToggleButton) view.findViewById(R.id.toggleButton);
+        spinnerDue = (Spinner)view.findViewById(R.id.spinner2);
+
+
+
+        adapter = new ArrayAdapter<>(getActivity(),android.R.layout.simple_spinner_dropdown_item,
+                new String[]{//selezionaProgramma,
+                        programmaUno,programmaDue,programmaTre,programmaQuattro,programmaCinque,programmaSei,
+                        programmaSette, programmaOtto,programmaNove,programmaDieci,programmaUndici,programmaDodici,
+                        programmaTredici, programmaQuattordici,programmaQuindici,programmaSedici,programmaDiciassette,
+                        programmaDiciotto,programmaDiciannove});
+
+
+        spinnerDue.setAdapter(adapter);
+
+
+        spinnerDue.setEnabled(false);
+        invia.setEnabled(false);
 
 
         disConnect.setOnClickListener(new View.OnClickListener() {

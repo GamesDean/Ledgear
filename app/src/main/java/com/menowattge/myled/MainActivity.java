@@ -34,6 +34,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,11 +56,9 @@ import java.util.Random;
 import java.util.UUID;
 
 import static com.menowattge.myled.R.id.fragment_container;
-import static com.menowattge.myled.R.id.fragment_preset;
 
 
-public  class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, CharacteristicFragment.OnFragmentInteractionListener,
-PresetFragment.OnFragmentInteractionListener
+public  class MainActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks, CharacteristicFragment.OnFragmentInteractionListener
 
 {
 
@@ -71,10 +70,11 @@ PresetFragment.OnFragmentInteractionListener
     BluetoothAdapter btAdapter;
     BluetoothLeScanner btScanner;
     static Button startScanningButton;
-    static Button stopScanningButton;
     Button connectButton;
     Button disconnectButton;
     Button sendButton;
+    ProgressBar progressBar;
+
 
     TextView peripheralTextView;
 
@@ -86,29 +86,19 @@ PresetFragment.OnFragmentInteractionListener
     private boolean stoP=true;
     private boolean starT=false;
     private int i=0;
-    private String rssi = "";
+    protected String rssi = "";
     private String device = "";
     private Handler handLer = new Handler();
     private static final int SCAN_PERIOD = 5000;
     private final static int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
-    private byte[] byteProva;
+    protected byte[] byteValue;
     // li uso poi nel fragment
     protected BluetoothDevice devProva=null;
 
 
 
-    @Override
-    public void onAttachFragment(final Fragment fragment) {
-        // TODO Auto-generated method stub
-        super.onAttachFragment(fragment);
-
-
-        System.out.println("FRAGMENT ID "+String.valueOf(fragment.getId()));
-
-
-    }
 
     @Override
     public void onBackPressed() {
@@ -134,37 +124,14 @@ PresetFragment.OnFragmentInteractionListener
         adapter=new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
         bleDevices = (TextView) findViewById(R.id.textView);
         counter = (TextView) findViewById(R.id.counter);
-        //textview per visualizzare i dati,con scroll laterale. MEGLIO UNA LISTA
-      //  peripheralTextView = (TextView) findViewById(R.id.PeripheralTextView);
-     //   peripheralTextView.setMovementMethod(new ScrollingMovementMethod());
 
-        //pulsanti sovrapposti per avviare e terminare la scansione
+
         startScanningButton = (Button) findViewById(R.id.StartScanButton);
         startScanningButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 startScanning();
             }
         });
-
-        stopScanningButton = (Button) findViewById(R.id.StopScanButton);
-        stopScanningButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                stopScanning();
-            }
-        });
-        //lo setto invisibile di default
-        stopScanningButton.setVisibility(View.INVISIBLE);
-
-        //pulsante per connettersi al dispositivo
-
-
-      //  connectButton = (Button) findViewById(R.id.button2);
-
-        //pulsante per disconnettersi dal dispositivo
-       // disconnectButton = (Button) findViewById(R.id.button3);
-
-        //pulsante per inviare dati al dispositivo
-       // sendButton = (Button) findViewById(R.id.button4);
 
 
         //devo passare attraverso il manager e l'adapter per poter utilizzare lo scanner
@@ -174,6 +141,12 @@ PresetFragment.OnFragmentInteractionListener
         CheckPermission();
 
         listView.setVisibility(View.INVISIBLE);
+
+
+        progressBar = (ProgressBar)findViewById(R.id.progressBar2);
+        progressBar.setVisibility(View.INVISIBLE);
+
+
 
     }
 
@@ -333,6 +306,8 @@ PresetFragment.OnFragmentInteractionListener
 
 
 
+
+
     /*
      *
      * --------------------------------------------------------------------------------------------------------------------
@@ -365,12 +340,16 @@ PresetFragment.OnFragmentInteractionListener
     private ScanCallback leScanCallback = new ScanCallback() {
 
         @Override
-        public void onScanResult(int callbackType, ScanResult result) {
+        public void onScanResult(int callbackType, final ScanResult result) {
             String name = "Device Name : ";
             device = "\n" + name + result.getDevice().getName();
             rssi = " -- RSSI : " + result.getRssi() + "\n";
 
 
+
+
+//TODO : TUTTA STA ROBA SAREBBE MEGLIO ORGANIZZARLA IN METODI
+// TODO : AL POSTO DEL SEGNALE RSSI SAREBBE MEGLIO UNA SCRITTA TIPO DEBOLE-MEDIO-BUONO O PROGRESS BAR
 
            // final BluetoothDevice btDevice = result.getDevice();
             // sembra indifferente l'utilizzo dell'uno o dell'altro
@@ -383,13 +362,11 @@ PresetFragment.OnFragmentInteractionListener
             recentlySeen.add(device+rssi);
             // recentlySeen.add(rssi);
 
-          //  System.out.println("RSSI : "+rssi);
-           // System.out.println("ITERAZIONI : "+i);
+
 
             //aggiungo agli ufficiali alla prima iterazione o se l'adapter è vuoto
             if (i==0 || adapter.isEmpty()) {
                 adapter.add(device+rssi);
-               // adapter.add(rssi);
                 listView.setAdapter(adapter);
             }
 
@@ -411,86 +388,42 @@ PresetFragment.OnFragmentInteractionListener
                 }, SCAN_PERIOD);
             }
 
+
             //fondamentale
             mGatt = null;
-
-
-
 
 
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                    covEr = new CharacteristicFragment();
-                    FragmentTransaction transaction=getFragmentManager().beginTransaction();
-                    transaction.replace(fragment_container,covEr); // give your fragment container id in first parameter
-                    transaction.addToBackStack(null);  // if written, this transaction will be added to backstack
-                    transaction.commit();
+                    if(device!=null) {
+                        covEr = new CharacteristicFragment();
+                        FragmentTransaction transaction=getFragmentManager().beginTransaction();
+                        transaction.replace(fragment_container,covEr); // give your fragment container id in first parameter
+                        transaction.addToBackStack(null);  // if written, this transaction will be added to backstack
+                        transaction.commit();
 
-                    startScanningButton.setVisibility(View.INVISIBLE);
 
+                        startScanningButton.setVisibility(View.INVISIBLE);
+                    }
+                    else{
+                        Toast.makeText(getApplicationContext(),"dispositivo non valido",Toast.LENGTH_SHORT).show();
+                    }
 
 
                 }
             });
 
-
-
-
-
-
-
-            // connectToDevice(btDevice);  mi connetto al click,non in automatico
-
-       /*
-
-       //COMMENTO I PULSANTI,CIO' CHE AVVIENE QUI VERRA' GESTITO NELLA LISTA O AL DROPDOWN O IN UN'ALTRA ACTIVITY
-
-            connectButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    AsyncTask.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                          //  connectToDevice(btDevice);
-                            connectToDevice(devProva);
-
-                        }
-                    });
-
-                }
-            });
-
-            disconnectButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                    AsyncTask.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                          //  BluetoothGatt btGatt = connectToDevice(btDevice);
-                            BluetoothGatt btGatt = connectToDevice(devProva);
-
-                            discConnectToDevice(btGatt);
-
-
-                        }
-                    });
-                }
-            });
-        */
 
         }
-
-
     };
 
 
 
 
      CountDownTimer countdown = null;
-
+    // TODO MAGARI SOSTITUIRE CON UNA GIRELLA
     // contatore,appare un countdown di 10 sec
     public void counTer(boolean flaG) {
     //se passo start(false)
@@ -501,7 +434,18 @@ PresetFragment.OnFragmentInteractionListener
                 public void onTick(long millisUntilFinished) {
                     counter.setText("wait: " + millisUntilFinished / 1000);
                     //così evito il click e la questione del tasto che compare
+                    // TODO PENSARE A QUALCOSA DI MEGLIO...ORA CON LO SPINNER E' QUASI OK
                     listView.setVisibility(View.INVISIBLE);
+
+                    progressBar.setVisibility(View.VISIBLE);
+
+                    progressBar.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                        progressBar.setVisibility(View.INVISIBLE);
+                        }
+                    },SCAN_PERIOD);
+
 
                 }
 
@@ -530,7 +474,7 @@ PresetFragment.OnFragmentInteractionListener
     public void startScanning() {
 
         startScanningButton.setVisibility(View.INVISIBLE);
-        stopScanningButton.setVisibility(View.VISIBLE);
+ //       TODO : ELIMINARE
 
         //avvia il contatore
         counTer(starT);
@@ -573,42 +517,13 @@ PresetFragment.OnFragmentInteractionListener
 
                 btScanner.stopScan(leScanCallback);
                 startScanningButton.setVisibility(View.VISIBLE);
-                stopScanningButton.setVisibility(View.INVISIBLE);
+
 
             }
         }, SCAN_PERIOD);
 
     }
 
-    // TODO : !! DA ELIMINARE !!
-
-    public void stopScanning() {
-
-        startScanningButton.setVisibility(View.VISIBLE);
-        stopScanningButton.setVisibility(View.INVISIBLE);
-
-        //uso thread asincrono
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                btScanner.stopScan(leScanCallback);
-                //innesto i thread,solo quello della UI può modificare gli oggetti a video
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        bleDevices.setText("Press scan");
-                        //stoppo il contatore
-                        counTer(stoP);
-
-                    }
-                });
-
-
-
-            }
-        });
-
-    }
 
 
     // metodi delle interfacce
@@ -673,7 +588,6 @@ PresetFragment.OnFragmentInteractionListener
 
     //
     public UUID uuId,charUuid;
-    byte[] byteArray = {1,2,3};
 
 
     protected final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
@@ -714,39 +628,50 @@ PresetFragment.OnFragmentInteractionListener
                 //ottengo un'istanza del fragment
                 android.app.FragmentManager fm = getFragmentManager();
 
-                CharacteristicFragment fragment = (CharacteristicFragment) fm.findFragmentById(fragment_container);
+               final CharacteristicFragment fragment = (CharacteristicFragment) fm.findFragmentById(fragment_container);
 
-                //OLD--al tap del testo (che mostra per ora l' UUID del device) invio un array di byte
-                //NEW--al tap avvia un nuovo fragment dove gestirò l'invio dei byte
+                //suggerimento dello spinner
+                fragment.spinnerDue.setPrompt(fragment.selezionaProgramma);
 
-                fragment.fragmentTextView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        // operazione equivalente all'uso degli intent con le activity
-                        covEr = new PresetFragment();
-                        FragmentTransaction transaction=getFragmentManager().beginTransaction();
-                        transaction.replace(fragment_preset,covEr);
-                        transaction.addToBackStack(null);
-                        transaction.commit();
-
-                       // writeCharacteristic(uuId,charUuid,byteArray);
-                    }
-                });
-
-
-                PresetFragment presetFragment = (PresetFragment) fm.findFragmentById(fragment_preset);
-                presetFragment.spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                fragment.spinnerDue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        String item = (String) adapter.getItem(position);
-                        Toast.makeText(
-                                getApplicationContext(),
-                                "hai selezionato "+ item,
-                                Toast.LENGTH_LONG).show();
+                        String item = (String) fragment.adapter.getItem(position);
 
-                        Log.i("TOTTA","selezionato");
+                        //lo rendo cliccabile
+                        fragment.invia.setEnabled(true);
 
+                        if(item.equals(fragment.programmaUno)){byteValue = new byte[]{1};}
+                        else if(item.equals(fragment.programmaDue)){byteValue = new byte[]{2};}
+                        else if(item.equals(fragment.programmaTre)){byteValue = new byte[]{3};}
+                        else if(item.equals(fragment.programmaQuattro)){byteValue = new byte[]{4};}
+                        else if(item.equals(fragment.programmaCinque)){byteValue = new byte[]{5};}
+                        else if(item.equals(fragment.programmaSei)){byteValue = new byte[]{6};}
+                        else if(item.equals(fragment.programmaSette)){byteValue = new byte[]{7};}
+                        else if(item.equals(fragment.programmaOtto)){byteValue = new byte[]{8};}
+                        else if(item.equals(fragment.programmaNove)){byteValue = new byte[]{9};}
+                        else if(item.equals(fragment.programmaDieci)){byteValue = new byte[]{10};}
+                        else if(item.equals(fragment.programmaUndici)){byteValue = new byte[]{11};}
+                        else if(item.equals(fragment.programmaDodici)){byteValue = new byte[]{12};}
+                        else if(item.equals(fragment.programmaTredici)){byteValue = new byte[]{13};}
+                        else if(item.equals(fragment.programmaQuattordici)){byteValue = new byte[]{14};}
+                        else if(item.equals(fragment.programmaQuindici)){byteValue = new byte[]{15};}
+                        else if(item.equals(fragment.programmaSedici)){byteValue = new byte[]{16};}
+                        else if(item.equals(fragment.programmaDiciassette)){byteValue = new byte[]{17};}
+                        else if(item.equals(fragment.programmaDiciotto)){byteValue = new byte[]{18};}
+                        else if(item.equals(fragment.programmaDiciannove)){byteValue = new byte[]{19};}
+
+
+                        fragment.invia.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+
+                                writeCharacteristic(uuId,charUuid,byteValue);
+
+                                Toast.makeText(getApplicationContext(),
+                                        "ho inviato il numero : "+byteValue[0] ,Toast.LENGTH_LONG).show();
+                            }
+                        });
                     }
 
                     @Override
@@ -754,33 +679,6 @@ PresetFragment.OnFragmentInteractionListener
 
                     }
                 });
-
-/*
-                presetFragment.buttonSend.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        writeCharacteristic(uuId,charUuid,byteProva);
-                        System.out.println("invio riuscito");
-                    }
-                });
-*/
-
-
-
-
-
-       /*     sendButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                    writeCharacteristic(uuId,charUuid,byteArray);
-                }
-            });
-       */
-
-
-
 
         }
 
@@ -791,20 +689,11 @@ PresetFragment.OnFragmentInteractionListener
         public void onCharacteristicRead(final BluetoothGatt gatt,  final BluetoothGattCharacteristic characteristic, int status) {
             Log.i("onCharacteristicRead", characteristic.toString());
 
-            final byte[] characteristicValue = characteristic.getValue();
-
-
-
             try {
-              //  System.out.println("CHAR-UUID : " + uuId);
-                //permette di modificare la ui
-
-
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                      //  peripheralTextView.append("\n\nCHARACTERISTIC : " + uuId);
 
                         //ottengo un'istanza del fragment
                         android.app.FragmentManager fm = getFragmentManager();
@@ -821,50 +710,6 @@ PresetFragment.OnFragmentInteractionListener
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            // gatt.disconnect();
-
-
-
-            // QUI GESTISCO L'INVIO DEI DATI HO COMMENTATO PERCHE VEDO SE USARE I METODI IN FONDO
-
-    /*       sendButton.setOnClickListener(new View.OnClickListener() {
-               @Override
-               public void onClick(View v) {
-
-                   AsyncTask.execute(new Runnable() {
-                       @Override
-                       public void run() {
-
-
-                           if (((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE) |
-                                   (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)) > 0) {
-                               // writing characteristic functions
-                               mWriteCharacteristic = characteristic;
-                           }
-
-
-
-                           // "str" is the string or character you want to write
-
-                           byte[] valueToWrite = mWriteCharacteristic.getValue();
-                           mWriteCharacteristic.setValue(valueToWrite);
-
-                           boolean successfullyWritten = gatt.writeCharacteristic(mWriteCharacteristic);
-
-
-                           if (successfullyWritten) {
-                               System.out.println("CHARACTERISTIC WRITTEN");
-
-                           }
-
-
-                       }
-                   });
-
-
-               }
-           });
-*/
 
         }
 
@@ -878,7 +723,6 @@ PresetFragment.OnFragmentInteractionListener
 
 
 
-//versione più ordinata di quanto eseguo grezzamente in onServiceDiscovered
     public boolean readCharacteristic(UUID gatservice_uuid, UUID char_uuid){
 
 
@@ -903,13 +747,12 @@ PresetFragment.OnFragmentInteractionListener
 
     }
 
-    //versione ordinata di quanto gestisco con il tasto invio dati
-    // vedere quale è migliore
 
     public boolean writeCharacteristic(UUID gatservice_uuid,UUID char_uuid,byte[] value){
 
             try{
                 //if(mBluetoothGatt==null || mBluetoothGattServiceList==null) return false;
+
                 BluetoothGattService bgs = mGatt.getService(gatservice_uuid);
                 if(bgs==null){
                     Log.e("BGS:"+bgs+"->"," can not find ! write error");
@@ -942,7 +785,6 @@ PresetFragment.OnFragmentInteractionListener
                 return false ;
             }
         }
-
 
 
 

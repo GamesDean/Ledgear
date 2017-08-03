@@ -10,25 +10,7 @@
     <string name="device_pronto_per_la_connessione">Device pronto per la connessione</string>
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
+    <string name="selectone">selectOne</string>
 
-    <string-array name="profili_dimmerazione">
-        <item>Dimmerazione_1</item>
-        <item>Dimmerazione_2</item>
-        <item>Dimmerazione_3</item>
-        <item>Dimmerazione_4</item>
-        <item>Dimmerazione_5</item>
-        <item>Dimmerazione_6</item>
-        <item>Dimmerazione_7</item>
-        <item>Dimmerazione_8</item>
-        <item>Dimmerazione_9</item>
-        <item>Dimmerazione_10</item>
-        <item>Dimmerazione_11</item>
-        <item>Dimmerazione_12</item>
-        <item>Dimmerazione_14</item>
-        <item>Dimmerazione_15</item>
-        <item>Dimmerazione_16</item>
-        <item>Dimmerazione_17</item>
-        <item>Dimmerazione_18</item>
-        <item>Dimmerazione_19</item>
-    </string-array>
+
 </resources>

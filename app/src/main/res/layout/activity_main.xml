@@ -28,14 +28,6 @@
         android:layout_marginTop="23dp"
         android:text="@string/scan" />
 
-    <Button
-        android:id="@+id/StopScanButton"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_alignBaseline="@+id/StartScanButton"
-        android:layout_alignBottom="@+id/StartScanButton"
-        android:layout_centerHorizontal="true"
-        android:text="@string/stop" />
 
     <ListView
         android:id="@+id/listView"
@@ -44,7 +36,9 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
         android:layout_marginTop="100dp"
-        android:background="@color/wallet_bright_foreground_holo_dark" />
+        android:background="@color/wallet_bright_foreground_holo_dark"
+
+        />
 
     <TextView
         android:id="@+id/counter"
@@ -60,17 +54,21 @@
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical" >
-
+        android:orientation="vertical"
+        android:weightSum="1">
     </LinearLayout>
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/fragment_preset"
+    <ProgressBar
+        android:id="@+id/progressBar2"
+        style="@style/Widget.AppCompat.ProgressBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical" >
+        android:layout_centerHorizontal="true"
+        android:indeterminateDrawable="@xml/progress_bar" />
 
-    </LinearLayout>
+
+
+
 
     <!--TextView
         android:layout_width="match_parent"

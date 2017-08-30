@@ -1,5 +1,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@mipmap/ge_frag"
     android:layout_width="match_parent"
     android:layout_marginBottom="20dp"
@@ -11,40 +12,53 @@
     android:layout_height="match_parent"
     android:layout_marginTop="100dp"
     android:layout_marginBottom="100dp"
-
     android:background="#80b0b3b4"
     tools:context="com.menowattge.myled.CharacteristicFragment">
 
-    <!-- TODO: Update blank fragment layout, fare un ulteriore textview e centrarlo-->
 
-
-    <!--TextView
-        android:id="@+id/fragmentText"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-
-        android:layout_marginBottom="90dp"
-        android:layout_marginLeft="5dp"
-        android:layout_marginRight="5dp"
-        android:layout_marginTop="60dp"
-        android:background="#95f4f6f7"
-        android:gravity="center"
-        android:text="@string/device_pronto_per_la_connessione"
-        android:textAlignment="center"
-        android:textColor="@color/colorMenowattge"
-        android:textSize="20sp" /-->
-
-
-
-    <ToggleButton
+    <!--ToggleButton
         android:id="@+id/toggleButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
         android:layout_gravity="center"
+        android:layout_marginBottom="100dp"
+        android:background="@xml/toggle_style"
+        android:checked="false"
         android:text="@string/connect"
+        android:textAllCaps="false"
+        android:textColor="#fff"
         android:textOff="Connect"
-        android:textOn="@string/disconnect" />
+        android:textOn="@string/disconnect" /-->
+
+    <ir.sohreco.circularpulsingbutton.CircularPulsingButton
+        android:id="@+id/pulsebuttonConnect"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="100dp"
+        android:background="@xml/toggle_style"
+        app:cpb_text="@string/connect"
+        app:cpb_textColor="#fff"
+        app:cpb_color="#9053a14b"
+        app:cpb_zoomOutScale="0.9"
+        app:cpb_zoomInScale="1.35"
+        app:cpb_animationDuration="500"/>
+
+    <ir.sohreco.circularpulsingbutton.CircularPulsingButton
+        android:id="@+id/pulsebuttonDisconnect"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="100dp"
+        android:background="@xml/toggle_style_2"
+        app:cpb_text="@string/disconnect"
+        app:cpb_textColor="#fff"
+        app:cpb_color="#90e53935"
+        app:cpb_zoomOutScale="0.9"
+        app:cpb_zoomInScale="1.35"
+        app:cpb_animationDuration="500"/>
+
+
 
 
     <Spinner
@@ -56,19 +70,55 @@
         android:layout_marginLeft="5dp"
         android:layout_marginRight="5dp"
         android:background="@xml/spinner_style"
+        android:elevation="5dp"
+        android:popupBackground="#99b0bec5"
         android:clickable="true"
         android:gravity="center"
-        android:spinnerMode="dialog" />
+        android:spinnerMode="dropdown" />
 
 
 
-    <Button
+    <!--Button
         android:id="@+id/buttonInvia"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Invia"
         android:layout_marginBottom="100dp"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center"/-->
+    <view
+        android:id="@+id/buttonInvia"
+        class="mbanje.kurt.fabbutton.FabButton"
+        android:layout_width="@dimen/button_size"
+        android:layout_height="@dimen/button_size"
+        android:clickable="true"
+        android:color="?attr/colorPrimaryDark"
+        android:indeterminate="false"
+        android:indeterminateDuration="1000"
+        android:max="100"
+        android:visibility="visible"
+        android:layout_marginTop="100dp"
+        android:layout_gravity="center"
+        app:fbb_autoStart="true"
+        app:elevation="7dp"
+        app:fbb_hideProgressOnComplete="false"
+        app:fbb_progressColor="#b5f441"
+        app:fbb_progressWidthRatio="0.12"
+        app:fbb_showEndBitmap="false"
+        app:fbb_showShadow="true" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="100dp"
+        android:text="Ok"
+        android:textAllCaps="false"
+        android:textColor="#fff"
+        android:textSize="18sp" />
+
+    <!-- android:src="@android:drawable/ic_media_play"-->
+
 
 </FrameLayout>
 </RelativeLayout>

@@ -1,16 +1,10 @@
 <resources>
     <string name="app_name" translatable="false">Ledgear</string>
-    <string name="ble_scanner">BLE Scanner</string>
     <string name="scan">Scan</string>
     <string name="stop">Stop</string>
-    <string name="press_scan">Press Scan</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="device_pronto_per_la_connessione">Device pronto per la connessione</string>
+    <string name="press_scan">premere scan</string>
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
-    <string name="selectone">selectOne</string>
 
 
 </resources>

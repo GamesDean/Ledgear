@@ -9,13 +9,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import java.util.UUID;
+
+import ir.sohreco.circularpulsingbutton.CircularPulsingButton;
+import mbanje.kurt.fabbutton.FabButton;
 
 
 /**
@@ -39,13 +40,17 @@ public class CharacteristicFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    //chiude il fragment
-    //connect/disconnect
-    protected static ToggleButton disConnect;
+
+   /// protected static ToggleButton disConnect;
+
+    protected static CircularPulsingButton pulseButtonConnect;
+    protected static CircularPulsingButton pulseButtonDisconnect;
+
     private OnFragmentInteractionListener mListener;
     protected Spinner spinnerDue ;
     protected ArrayAdapter adapter;
-    protected Button invia;
+    //protected Button invia;
+    protected  FabButton invia;
 
     ProgressBar progressBarhorizontal;
 
@@ -75,7 +80,10 @@ public class CharacteristicFragment extends Fragment {
         Toast.makeText(getActivity(),"->Device Connesso<-"+"\n  UUID : "+a,Toast.LENGTH_LONG).show();
         Toast.makeText(getActivity(),"seleziona un programma",Toast.LENGTH_LONG).show();
         //spinner enabled ad avvenuta connessione
+
         spinnerDue.setEnabled(true);
+        spinnerDue.setAlpha(1f);
+
 
     }
 
@@ -122,13 +130,19 @@ public class CharacteristicFragment extends Fragment {
 
         view = inflater.inflate(R.layout.fragment_characteristic, container, false);
 
-        invia = (Button)view.findViewById(R.id.buttonInvia);
-        disConnect = (ToggleButton) view.findViewById(R.id.toggleButton);
+        //invia = (Button)view.findViewById(R.id.buttonInvia);
+        invia = (FabButton)view.findViewById(R.id.buttonInvia);
+
+        /// disConnect = (ToggleButton) view.findViewById(R.id.toggleButton);
+        pulseButtonConnect=(CircularPulsingButton) view.findViewById(R.id.pulsebuttonConnect);
+        pulseButtonDisconnect=(CircularPulsingButton) view.findViewById(R.id.pulsebuttonDisconnect);
+        pulseButtonDisconnect.setVisibility(View.INVISIBLE);
+
         spinnerDue = (Spinner)view.findViewById(R.id.spinner2);
 
 
 
-        adapter = new ArrayAdapter<>(getActivity(),android.R.layout.simple_spinner_dropdown_item,
+        adapter = new ArrayAdapter<>(getActivity(),R.layout.spinner_text,//android.R.layout.simple_spinner_dropdown_item,
                 new String[]{//selezionaProgramma,
                         programmaUno,programmaDue,programmaTre,programmaQuattro,programmaCinque,programmaSei,
                         programmaSette, programmaOtto,programmaNove,programmaDieci,programmaUndici,programmaDodici,
@@ -137,12 +151,67 @@ public class CharacteristicFragment extends Fragment {
 
 
         spinnerDue.setAdapter(adapter);
+        spinnerDue.setVisibility(View.VISIBLE);
 
-
+        //lo disabilito all' oncreate
         spinnerDue.setEnabled(false);
+        // disabilito anche il pulsante
         invia.setEnabled(false);
+        //imposto il pulsante con una tonalità semitrasparente per far capire che non è cliccabile
+        invia.setAlpha(0.2f);
+        spinnerDue.setAlpha(0.2f);
+
+        ///
+
+        pulseButtonConnect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                ((MainActivity) getActivity()).connectToDevice(((MainActivity) getActivity()).devProva);
+
+                pulseButtonConnect.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        pulseButtonConnect.setVisibility(View.INVISIBLE);
+                        // TODO: magari ci metto un'animazione che lo fa comparire gradualmente e levo setAlpha
+                        pulseButtonDisconnect.setAlpha(0.2f);
+                        pulseButtonDisconnect.setVisibility(View.VISIBLE);
+                        pulseButtonDisconnect.setEnabled(false);
+                    }
+                },2000);
 
 
+                pulseButtonDisconnect.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // TODO: magari lo faccio direttamente comparire con un'animazione : scompare l'altro,compare questo
+                        pulseButtonDisconnect.setAlpha(1f);
+                        pulseButtonDisconnect.setEnabled(true);
+                    }
+                },3500);
+
+            }
+        });
+
+        pulseButtonDisconnect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                BluetoothGatt btGatt = ((MainActivity) getActivity()).connectToDevice(((MainActivity) getActivity()).devProva);
+
+                ((MainActivity) getActivity()).discConnectToDevice(btGatt);
+                //rimuove il fragment dallo stack come quando si preme il tasto "back"
+                getFragmentManager().popBackStack();
+                //deve tornare invisibile
+                MainActivity.startScanningButton.setVisibility(View.INVISIBLE);
+                //deve tornare cliccabile
+                MainActivity.startScanningButton.setEnabled(true);
+                //riesegue la scansione per ripopolare la lista
+                ((MainActivity)getActivity()).startScanning();
+
+            }
+        });
+/*
         disConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -151,6 +220,14 @@ public class CharacteristicFragment extends Fragment {
                 if(disConnect.isChecked()) {
                     //mi connetto
                     ((MainActivity) getActivity()).connectToDevice(((MainActivity) getActivity()).devProva);
+
+                    disConnect.setEnabled(false);
+                    disConnect.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            disConnect.setEnabled(true);
+                        }
+                    },3500);
 
                 }
                 else if (!disConnect.isChecked()){
@@ -161,12 +238,14 @@ public class CharacteristicFragment extends Fragment {
                     getFragmentManager().popBackStack();
                     //deve tornare visibile
                     MainActivity.startScanningButton.setVisibility(View.VISIBLE);
+                    //deve tornare cliccabile
+                    MainActivity.startScanningButton.setEnabled(true);
                     //riesegue la scansione per ripopolare la lista
                     ((MainActivity)getActivity()).startScanning();
                 }
             }
         });
-
+*/
 
         return view;
     }
@@ -193,6 +272,8 @@ public class CharacteristicFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+
+
     }
 
     @Override

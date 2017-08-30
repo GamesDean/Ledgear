@@ -30,9 +30,9 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -55,6 +55,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import pl.bclogic.pulsator4droid.library.PulsatorLayout;
+
 import static com.menowattge.myled.R.id.fragment_container;
 
 
@@ -69,14 +71,13 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
     BluetoothLeScanner btScanner;
-    static Button startScanningButton;
-    Button connectButton;
-    Button disconnectButton;
-    Button sendButton;
+
+    //sono due, uno grande iniziale, l'altro piccolo, sopra la listview
+    static PulsatorLayout startScanningButton;
+    static PulsatorLayout startScanningButtonBig;
     ProgressBar progressBar;
 
 
-    TextView peripheralTextView;
 
     TextView bleDevices;
     TextView counter;
@@ -99,11 +100,12 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
 
 
-
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        final Animation animScaleUp = android.view.animation.AnimationUtils.loadAnimation(startScanningButton.getContext(),  R.anim.scale_up);
         getFragmentManager().popBackStack();
+        startScanningButton.setAnimation(animScaleUp);
         startScanningButton.setVisibility(View.VISIBLE);
         //startScanning();
     }
@@ -121,18 +123,37 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
         // lista che mostrerà a video i risultati della scansione
         listView = (ListView) findViewById(R.id.listView);
+
         adapter=new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
         bleDevices = (TextView) findViewById(R.id.textView);
         counter = (TextView) findViewById(R.id.counter);
 
 
-        startScanningButton = (Button) findViewById(R.id.StartScanButton);
+        startScanningButton = (PulsatorLayout) findViewById(R.id.StartScanButton);
+        startScanningButtonBig = (PulsatorLayout)findViewById(R.id.StartScanButtonBig);
+
+        startScanningButtonBig.start();
+
+        final Animation animScaleUpBig = android.view.animation.AnimationUtils.loadAnimation(startScanningButtonBig.getContext(),  R.anim.scale_up);
+
+        //imposto l'animazione
+        startScanningButtonBig.startAnimation(animScaleUpBig);
+
+
         startScanningButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 startScanning();
+                startScanningButton.setVisibility(View.INVISIBLE);
             }
         });
 
+        startScanningButtonBig.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startScanning();
+                startScanningButtonBig.setVisibility(View.INVISIBLE);
+            }
+        });
 
         //devo passare attraverso il manager e l'adapter per poter utilizzare lo scanner
         btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -142,9 +163,9 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
         listView.setVisibility(View.INVISIBLE);
 
-
         progressBar = (ProgressBar)findViewById(R.id.progressBar2);
         progressBar.setVisibility(View.INVISIBLE);
+
 
 
 
@@ -353,14 +374,14 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
            // final BluetoothDevice btDevice = result.getDevice();
             // sembra indifferente l'utilizzo dell'uno o dell'altro
-            devProva = btAdapter.getRemoteDevice(result.getDevice().getAddress());
 
+            // TODO : cambiare nome a devProva
+            devProva = btAdapter.getRemoteDevice(result.getDevice().getAddress());
 
 
             //aggiungo nuovi device ai recenti,ad ogni iterazione della callback
             recentlySeen = new ArrayList();
             recentlySeen.add(device+rssi);
-            // recentlySeen.add(rssi);
 
 
 
@@ -374,14 +395,16 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
             if (!(adapter.equals(recentlySeen.contains(device))) ){
                     listView.setAdapter(adapter);
                 }
-            //
+
             if(!device.isEmpty()) {
-                bleDevices.setText("Devices Found");
+               // imposta il testo a vuoto
+                bleDevices.setText("");
 
                 handLer.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        bleDevices.setText("Press scan");
+                        // TODO : da eliminare
+                       // bleDevices.setText("Press scan");
                         //svuoto i valori di "rssi" per poter effettuare i controlli allo start
                         rssi ="";
                     }
@@ -392,6 +415,10 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
             //fondamentale
             mGatt = null;
 
+            //animazione
+            final Animation animScaleDown = android.view.animation.AnimationUtils.loadAnimation(startScanningButtonBig.getContext(),  R.anim.scale_down);
+            final Animation animScaleUp = android.view.animation.AnimationUtils.loadAnimation(startScanningButton.getContext(),  R.anim.scale_up);
+
 
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -400,12 +427,18 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                     if(device!=null) {
                         covEr = new CharacteristicFragment();
                         FragmentTransaction transaction=getFragmentManager().beginTransaction();
+                        transaction.setCustomAnimations(android.R.animator.fade_in,android.R.animator.fade_out);
                         transaction.replace(fragment_container,covEr); // give your fragment container id in first parameter
                         transaction.addToBackStack(null);  // if written, this transaction will be added to backstack
+
                         transaction.commit();
+                        //nel dubbio lo disabilito, non si sa mai crei conflitti
+                        startScanningButtonBig.setEnabled(false);
+
+                        startScanningButton.startAnimation(animScaleDown);
 
 
-                        startScanningButton.setVisibility(View.INVISIBLE);
+
                     }
                     else{
                         Toast.makeText(getApplicationContext(),"dispositivo non valido",Toast.LENGTH_SHORT).show();
@@ -427,6 +460,11 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     // contatore,appare un countdown di 10 sec
     public void counTer(boolean flaG) {
     //se passo start(false)
+
+
+        final Animation animFadeInList = android.view.animation.AnimationUtils.loadAnimation(listView.getContext(),  android.R.anim.fade_in);
+        final Animation animScaleUp = android.view.animation.AnimationUtils.loadAnimation(startScanningButton.getContext(),  R.anim.scale_up);
+
         if(!flaG) {
 
             countdown = new CountDownTimer(SCAN_PERIOD, 1000) {
@@ -436,13 +474,13 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                     //così evito il click e la questione del tasto che compare
                     // TODO PENSARE A QUALCOSA DI MEGLIO...ORA CON LO SPINNER E' QUASI OK
                     listView.setVisibility(View.INVISIBLE);
-
                     progressBar.setVisibility(View.VISIBLE);
 
                     progressBar.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                        progressBar.setVisibility(View.INVISIBLE);
+
+                            progressBar.setVisibility(View.INVISIBLE);
                         }
                     },SCAN_PERIOD);
 
@@ -450,9 +488,11 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                 }
 
                 public void onFinish() {
-                    counter.setText("ready");
+                    startScanningButton.setAnimation(animScaleUp);
+                    startScanningButton.setVisibility(View.VISIBLE);
+                    listView.setAnimation(animFadeInList);
                     listView.setVisibility(View.VISIBLE);
-
+                    counter.setText("");
                 }
 
 
@@ -473,8 +513,6 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
     public void startScanning() {
 
-        startScanningButton.setVisibility(View.INVISIBLE);
- //       TODO : ELIMINARE
 
         //avvia il contatore
         counTer(starT);
@@ -487,14 +525,17 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
         //eseguo il controllo basandomi sull'rssi : se non presente,non ci sono device nel range
         if (rssi.isEmpty()) {
-            bleDevices.setText("No BLE Devices");
-            handLer.postDelayed(new Runnable() {
+
+            bleDevices.setText("nessun dispostivo rilevato");
+
+           /* handLer.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    bleDevices.setText("Press scan");
+                    bleDevices.setText("premere scan");
 
                 }
             },SCAN_PERIOD);
+            */
         }
 
 
@@ -510,13 +551,13 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         });
 
 
-        //maniglia che stoppa la scansione in automatico  dopo 10 secondi
+        //maniglia che stoppa la scansione in automatico  dopo 4 secondi
         handLer.postDelayed(new Runnable() {
             @Override
             public void run() {
 
                 btScanner.stopScan(leScanCallback);
-                startScanningButton.setVisibility(View.VISIBLE);
+                startScanningButton.start();
 
 
             }
@@ -628,7 +669,9 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                 //ottengo un'istanza del fragment
                 android.app.FragmentManager fm = getFragmentManager();
 
-               final CharacteristicFragment fragment = (CharacteristicFragment) fm.findFragmentById(fragment_container);
+                final CharacteristicFragment fragment = (CharacteristicFragment) fm.findFragmentById(fragment_container);
+                //animazione pulsante invia
+                final Animation anim = android.view.animation.AnimationUtils.loadAnimation(fragment.invia.getContext(),  R.anim.shake);
 
                 //suggerimento dello spinner
                 fragment.spinnerDue.setPrompt(fragment.selezionaProgramma);
@@ -640,6 +683,13 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
                         //lo rendo cliccabile
                         fragment.invia.setEnabled(true);
+                        //reimposto il colore pieno rendendolo nuovamente ben visibile
+                        fragment.invia.setAlpha(1f);
+
+                        //azzero la barra circolare del progresso
+                        fragment.invia.setProgress(0);
+                        //ad ogni selezione parte l'animazione che fa capire di dover cliccare il pulsante
+                        fragment.invia.startAnimation(anim);
 
                         if(item.equals(fragment.programmaUno)){byteValue = new byte[]{1};}
                         else if(item.equals(fragment.programmaDue)){byteValue = new byte[]{2};}
@@ -665,6 +715,9 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         fragment.invia.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
+
+                                fragment.invia.setProgress(100);
+
 
                                 writeCharacteristic(uuId,charUuid,byteValue);
 

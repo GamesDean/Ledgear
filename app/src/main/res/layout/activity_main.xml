@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -17,16 +18,114 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:text="@string/press_scan" />
+        android:fontFamily="sans-serif"
+        android:textColor="@color/colorMenowattGray"
+        android:textSize="15sp"
+        android:typeface="normal" />
 
-    <Button
+    <!--Button
         android:id="@+id/StartScanButton"
         android:layout_width="100dp"
         android:layout_height="50dp"
         android:layout_below="@+id/textView"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="23dp"
-        android:text="@string/scan" />
+        android:text="@string/scan" /-->
+
+    <!--android.support.design.widget.FloatingActionButton xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/StartScanButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="23dp"
+        android:clickable="true"
+        app:elevation="7dp"
+        app:borderWidth="0dp"
+        app:pressedTranslationZ="10dp"
+        app:rippleColor="#c2f442"
+        app:srcCompat="@mipmap/ic_launcher" /-->
+
+
+    <!--view
+        android:id="@+id/StartScanButton"
+        class="mbanje.kurt.fabbutton.FabButton"
+        android:layout_width="@dimen/button_size"
+        android:layout_height="@dimen/button_size"
+        android:color="?attr/colorPrimaryDark"
+        android:indeterminate="false"
+        android:indeterminateDuration="1000"
+        android:max="100"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="23dp"
+        android:clickable="true"
+        app:elevation="7dp"
+        android:visibility="visible"
+        android:layout_gravity="center"
+        app:fbb_autoStart="true"
+        app:fbb_hideProgressOnComplete="false"
+        app:fbb_progressColor="#b5f441"
+        app:fbb_progressWidthRatio="0.12"
+        app:fbb_showEndBitmap="false"
+        app:fbb_showShadow="true" /-->
+
+    <pl.bclogic.pulsator4droid.library.PulsatorLayout
+        android:id="@+id/StartScanButton"
+        android:layout_width="95dp"
+        android:layout_height="95dp"
+        android:layout_centerHorizontal="true"
+        android:layout_gravity="center"
+        android:layout_marginTop="23dp"
+        android:visibility="visible"
+        app:elevation="7dp"
+        app:pulse_color="#53a14b"
+        app:pulse_count="4"
+        app:pulse_duration="7000"
+        app:pulse_interpolator="Linear"
+        app:pulse_repeat="0"
+        app:pulse_startFromScratch="true">
+    </pl.bclogic.pulsator4droid.library.PulsatorLayout>
+
+    <pl.bclogic.pulsator4droid.library.PulsatorLayout
+        android:id="@+id/StartScanButtonBig"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_gravity="center"
+        android:visibility="visible"
+        app:elevation="20dp"
+        app:pulse_color="#53a14b"
+
+        app:pulse_count="4"
+        app:pulse_duration="7000"
+        app:pulse_interpolator="Decelerate"
+        app:pulse_repeat="0"
+        app:pulse_startFromScratch="true">
+    </pl.bclogic.pulsator4droid.library.PulsatorLayout>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="55dp"
+        android:text="scan"
+        android:layout_centerHorizontal="true"
+        android:textColor="#fff"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="scan"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:textColor="#fff"
+        android:textSize="18sp" />
+
 
 
     <ListView
@@ -34,11 +133,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="20dp"
-        android:layout_marginTop="100dp"
-        android:background="@color/wallet_bright_foreground_holo_dark"
-
-        />
+        android:layout_marginBottom="40dp"
+        android:layout_marginTop="120dp"
+        android:dividerHeight="2dp"
+        android:divider="#8053a14b"
+        android:background="@xml/listview_style"
+        android:visibility="visible" />
 
     <TextView
         android:id="@+id/counter"
@@ -46,9 +146,9 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/StartScanButton"
         android:layout_alignParentEnd="true"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="7dp"
         android:layout_marginEnd="13dp"
-        android:text="ready!" />
+        android:textColor="@color/colorMenowattGray" />
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/fragment_container"
@@ -66,6 +166,25 @@
         android:layout_centerHorizontal="true"
         android:indeterminateDrawable="@xml/progress_bar" />
 
+    <!--ImageView
+        android:id="@+id/green"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@android:drawable/presence_online"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="25dp"
+        android:layout_below="@+id/textView"
+        android:layout_alignEnd="@+id/counter" />
+
+    <ImageView
+        android:id="@+id/red"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/counter"
+        android:layout_below="@+id/textView"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="25dp"
+        app:srcCompat="@android:drawable/presence_invisible" /-->
 
 
 

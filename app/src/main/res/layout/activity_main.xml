@@ -138,6 +138,7 @@
         android:dividerHeight="2dp"
         android:divider="#8053a14b"
         android:background="@xml/listview_style"
+        android:textAlignment="center"
         android:visibility="visible" />
 
     <TextView

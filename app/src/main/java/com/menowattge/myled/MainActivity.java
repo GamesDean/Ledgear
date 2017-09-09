@@ -20,6 +20,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -30,6 +31,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -156,6 +158,8 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         startScanningButtonBig.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                bleDevices.clearAnimation();
+                bleDevices.setText("");
                 startScanning();
                 startScanningButtonBig.setVisibility(View.INVISIBLE);
             }
@@ -173,7 +177,14 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         progressBar.setVisibility(View.INVISIBLE);
 
 
-
+        bleDevices.setText("premi scan");
+        Animation anim = new AlphaAnimation(0.0f, 1.0f);
+        anim.setDuration(500); //You can manage the blinking time with this parameter
+        anim.setStartOffset(20);
+        anim.setRepeatMode(Animation.REVERSE);
+        anim.setRepeatCount(Animation.INFINITE);
+        bleDevices.setTextColor(Color.BLUE);
+        bleDevices.startAnimation(anim);
 
     }
 
@@ -371,40 +382,40 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
             super.onScanResult(callbackType,result);
 
-            String name = "Device Name : ";
-            device = name + result.getDevice().getName();
-            rssi = " -- RSSI : " + result.getRssi() + "\n";
+            device = "Nome : " + result.getDevice().getName();
+            rssi = " - RSSI : " + result.getRssi() ;
 
-
+            //indirizzo esadecimale del dispositivo
             deviceAddress = btAdapter.getRemoteDevice(result.getDevice().getAddress());
+            //ad ogni iterazione della callback aggiorno la lista dei dispositivi aggiungendo tutto ciò
+            //che viene rilevato dalla scansione, anche i doppioni
+            recentlySeen.add(device);
 
-            if(device!=""|| !device.equals(null)||!device.isEmpty()||!device.equals("null")) {
-                recentlySeen.add(device);
-                //recentlySeen.add(rssi);
-            }
-
+            // Set è una struttura dati che non ammette doppioni, la riempio con i dati raccolti
+            //così in automatico vengono eliminate le entrate multiple.
             Set<String> noDuplicates = new LinkedHashSet<String>(recentlySeen);
+            //svuoto la lista
             recentlySeen.clear();
+            //riempio nuovamente la lista ma con i dati privi di entrate multiple
             recentlySeen.addAll(noDuplicates);
 
+
+            // serve a contenere i dati dell'iterazione precedente ed eiliminare i ripetuti
+            Set<String> onlyRssi = new LinkedHashSet<>(rssiList);
+            //svuoto la lista degli rssi contenente i dati ripetuti
+            rssiList.clear();
+            // ora che la lista è vuota,aggiungo
+            rssiList.add(rssi);
+            //riaggiungo alla lista(che in questo frangente contiene i dati della scansione avvenuta)i dati presenti in onlyRssi
+            rssiList.addAll(onlyRssi);
+
+            // --> a questo punto avrò dei valori senza doppioni <--
 
 
 
             System.out.println("lista :"+recentlySeen);
-
-
-
-
-           // final BluetoothDevice btDevice = result.getDevice();
-            // sembra indifferente l'utilizzo dell'uno o dell'altro
-
-            // TODO : cambiare nome a deviceAddress
-
-
-
-
-
-           System.out.println("deviceAddress : "+deviceAddress);
+            System.out.println("rssi_list :"+rssiList);
+            System.out.println("deviceAddress : "+deviceAddress);
 
 
 
@@ -435,7 +446,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                 //   if(device!=null) {
+
                         covEr = new CharacteristicFragment();
                         FragmentTransaction transaction=getFragmentManager().beginTransaction();
                         //animazione per il fragment
@@ -451,12 +462,6 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         startScanningButton.setEnabled(false);
                         //animazione che rende non visibile il pulsante piccolo
                         startScanningButton.startAnimation(animScaleDown);
-
-                  //  }
-                 /*   else{
-                        Toast.makeText(getApplicationContext(),"dispositivo non valido",Toast.LENGTH_SHORT).show();
-                    }
-                    */
 
 
                 }
@@ -506,15 +511,22 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                     listView.setVisibility(View.VISIBLE);
                     counter.setText("");
 
-                   for(Object item : recentlySeen){
-                       System.out.println("recently : "+item);
-                       adapter.add(item);
-                       listView.setAdapter(adapter);
-                   }
+                    //numero di elementi presenti nella lista dei dispositivi scansionati es: 5
+                    int numElementi = recentlySeen.size();
+                    int x;
+                    System.out.println("lista_rssi : "+rssiList);
 
+                    //scorro la lista degli elementi scansionati
+                    for(Object item : recentlySeen) {
+                        x = numElementi--;  // decremento subito perchè parte da 0 nell'array
+                        // ottengo l'rssi corrispondente al device
+                        //basandomi sulla posizione che entrambi ricoprono nei rispettivi array
+                        // es  deviceArray[3] <--> rssiArray[3]
+                        String lastRssi = rssiList.get(x);
+                        adapter.add(item+lastRssi);
+                        listView.setAdapter(adapter);
 
-                   // adapter.clear();
-
+                    }
                 }
 
 
@@ -543,14 +555,18 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         //alla pressione del tasto "scan" in primis ripulisco l'adapter e la lista dei recenti
         adapter.clear();
         recentlySeen.clear();
+        rssiList.clear();
 
         //tengo traccia delle iterazioni della callback DEBUG
         //i++;
 
+        String noDev = "            nessun dispostivo rilevato";
+
         //eseguo il controllo basandomi sull'rssi : se non presente,non ci sono device nel range
         if (rssi.isEmpty()) {
-
-            bleDevices.setText("nessun dispostivo rilevato");
+            adapter.insert(noDev,0);
+            listView.setAdapter(adapter);
+           // bleDevices.setText(noDev);
 
 
         }
@@ -627,9 +643,10 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
 
     private final static String TAG = MainActivity.class.getSimpleName();
-
     protected BluetoothGatt mGatt;
-    private BluetoothGattCharacteristic mWriteCharacteristic;
+    public UUID uuId,charUuid;
+    int x=0;
+
 
 
     // inizia la procedura di connessione
@@ -646,7 +663,6 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
 
     //
-    public UUID uuId,charUuid;
 
 
     protected final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
@@ -690,35 +706,39 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                 final CharacteristicFragment fragment = (CharacteristicFragment) fm.findFragmentById(fragment_container);
                 //animazione pulsante invia
                 final Animation anim = android.view.animation.AnimationUtils.loadAnimation(fragment.invia.getContext(),  R.anim.shake);
-                final Animation animDue = android.view.animation.AnimationUtils.loadAnimation(fragment.invia.getContext(),  R.anim.scale_up);
+                final Animation animDue = android.view.animation.AnimationUtils.loadAnimation(fragment.invia.getContext(),  android.R.anim.slide_in_left);
 
-                //suggerimento dello spinner
+                //suggerimento dello spinner se utilizzo il menù a tendina
                 fragment.spinnerDue.setPrompt(fragment.selezionaProgramma);
+
+
+
 
                 fragment.spinnerDue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                         String item = (String) fragment.adapter.getItem(position);
 
-                        //lo rendo cliccabile
-                      //  fragment.invia.setEnabled(true);
-                        //reimposto il colore pieno rendendolo nuovamente ben visibile
-                       // fragment.invia.setAlpha(1f);
+
 
                         //per farlo fare solo alla prima iterazione
-                        int x=0;
+
                         if(x==0) {
                             fragment.invia.startAnimation(animDue);
                             fragment.invia.setVisibility(View.VISIBLE);
                             fragment.textView.setVisibility(View.VISIBLE);
-
                         }
                         x++;
 
                         //azzero la barra circolare del progresso
                         fragment.invia.setProgress(0);
+
                         //ad ogni selezione parte l'animazione che fa capire di dover cliccare il pulsante
-                        fragment.invia.startAnimation(anim);
+                        if(item!=fragment.adapter.getItem(0)) {
+                            fragment.invia.startAnimation(anim);
+                        }else{
+                            Toast.makeText(getApplicationContext(),"seleziona un programma",Toast.LENGTH_SHORT).show();
+                        }
 
                         if(item.equals(fragment.programmaUno)){byteValue = new byte[]{1};}
                         else if(item.equals(fragment.programmaDue)){byteValue = new byte[]{2};}

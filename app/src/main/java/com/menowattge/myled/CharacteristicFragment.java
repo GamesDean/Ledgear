@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.widget.ArrayAdapter;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,9 +57,7 @@ public class CharacteristicFragment extends Fragment {
     protected TextView textView;
     protected TextView textViewFive;
 
-    ProgressBar progressBarhorizontal;
-
-    protected String selezionaProgramma = "Seleziona un Programma";
+    protected String selezionaProgramma = "----------> seleziona un programma <----------";
     protected String programmaUno = "Programma 1:23M2";
     protected String programmaDue ="Programma 2:23M3";
     protected String programmaTre = "Programma 3:22M2";
@@ -85,10 +82,7 @@ public class CharacteristicFragment extends Fragment {
     public void showUuid(UUID a){
         Toast.makeText(getActivity(),"->Device Connesso<-"+"\n  UUID : "+a,Toast.LENGTH_LONG).show();
         Toast.makeText(getActivity(),"seleziona un programma",Toast.LENGTH_LONG).show();
-        //spinner enabled ad avvenuta connessione
 
-       // spinnerDue.setEnabled(true);
-       // spinnerDue.setAlpha(1f);
 
         spinnerDue.postDelayed(new Runnable() {
             @Override
@@ -149,6 +143,7 @@ public class CharacteristicFragment extends Fragment {
         view = inflater.inflate(R.layout.fragment_characteristic, container, false);
 
         invia = (FabButton)view.findViewById(R.id.buttonInvia);
+        //testo sopra i pulsanti "connect" "disconnect", obbligatorio che i FAB non hanno il testo
         textView =(TextView)view.findViewById(R.id.textView2);
         textViewFive =(TextView)view.findViewById(R.id.textView5);
 
@@ -162,8 +157,9 @@ public class CharacteristicFragment extends Fragment {
 
 
 
+
         adapter = new ArrayAdapter<>(getActivity(),R.layout.spinner_text,//android.R.layout.simple_spinner_dropdown_item,
-                new String[]{//selezionaProgramma,
+                new String[]{selezionaProgramma,
                         programmaUno,programmaDue,programmaTre,programmaQuattro,programmaCinque,programmaSei,
                         programmaSette, programmaOtto,programmaNove,programmaDieci,programmaUndici,programmaDodici,
                         programmaTredici, programmaQuattordici,programmaQuindici,programmaSedici,programmaDiciassette,
@@ -171,16 +167,9 @@ public class CharacteristicFragment extends Fragment {
 
 
         spinnerDue.setAdapter(adapter);
-        //spinnerDue.setVisibility(View.VISIBLE);
 
-        //lo disabilito all' oncreate
-     /*   spinnerDue.setEnabled(false);
-        // disabilito anche il pulsante
-        invia.setEnabled(false);
-        //imposto il pulsante con una tonalità semitrasparente per far capire che non è cliccabile
-        invia.setAlpha(0.2f);
-        spinnerDue.setAlpha(0.2f);
-      */
+
+
         // li rendo invisibili per poi farli riapparire con un'animazione
         spinnerDue.setVisibility(View.INVISIBLE);
         invia.setVisibility(View.INVISIBLE);
@@ -188,7 +177,6 @@ public class CharacteristicFragment extends Fragment {
         textView.setVisibility(View.INVISIBLE);
         textViewFive.setVisibility(View.INVISIBLE);
 
-        ///
 
         pulseButtonConnect.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -200,31 +188,20 @@ public class CharacteristicFragment extends Fragment {
                     @Override
                     public void run() {
                         // TODO: magari ci metto un'animazione che lo fa comparire gradualmente e levo setAlpha
-                        final Animation animDis = android.view.animation.AnimationUtils.loadAnimation(fabButtonDisconnect.getContext(),  R.anim.scale_up);
+                        final Animation animDisLeft = android.view.animation.AnimationUtils.loadAnimation(fabButtonDisconnect.getContext(),  android.R.anim.slide_in_left);
                         final Animation animCon = android.view.animation.AnimationUtils.loadAnimation(fabButtonDisconnect.getContext(),  R.anim.scale_down);
 
                         pulseButtonConnect.setAnimation(animCon);
                         pulseButtonConnect.setVisibility(View.INVISIBLE);
 
-                        fabButtonDisconnect.setAnimation(animDis);
+                        fabButtonDisconnect.setAnimation(animDisLeft);
                         fabButtonDisconnect.setVisibility(View.VISIBLE);
 
-                        textViewFive.setAnimation(animDis);
+                        textViewFive.setAnimation(animDisLeft);
                         textViewFive.setVisibility(View.VISIBLE);
                     }
                 },2000);
 
-/*
-                fabButtonDisconnect.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        // TODO: magari lo faccio direttamente comparire con un'animazione : scompare l'altro,compare questo
-                        fabButtonDisconnect.setAlpha(1f);
-                        fabButtonDisconnect.setEnabled(true);
-                    }
-                },3500);
-
-*/
             }
         });
 
@@ -246,41 +223,7 @@ public class CharacteristicFragment extends Fragment {
 
             }
         });
-/*
-        disConnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
 
-                BluetoothGatt btGatt = ((MainActivity) getActivity()).connectToDevice(((MainActivity) getActivity()).deviceAddress);
-                if(disConnect.isChecked()) {
-                    //mi connetto
-                    ((MainActivity) getActivity()).connectToDevice(((MainActivity) getActivity()).deviceAddress);
-
-                    disConnect.setEnabled(false);
-                    disConnect.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            disConnect.setEnabled(true);
-                        }
-                    },3500);
-
-                }
-                else if (!disConnect.isChecked()){
-                    //mi disconnetto
-                    ((MainActivity) getActivity()).discConnectToDevice(btGatt);
-
-                    //rimuove il fragment dallo stack come quando si preme il tasto "back"
-                    getFragmentManager().popBackStack();
-                    //deve tornare visibile
-                    MainActivity.startScanningButton.setVisibility(View.VISIBLE);
-                    //deve tornare cliccabile
-                    MainActivity.startScanningButton.setEnabled(true);
-                    //riesegue la scansione per ripopolare la lista
-                    ((MainActivity)getActivity()).startScanning();
-                }
-            }
-        });
-*/
 
         return view;
     }

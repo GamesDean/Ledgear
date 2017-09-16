@@ -97,7 +97,7 @@
         android:layout_marginRight="5dp"
         android:background="@xml/spinner_style"
         android:elevation="5dp"
-        android:popupBackground="#990b135e"
+        android:popupBackground="#99424242"
         android:textAlignment="center"
         android:popupElevation="15dp"
         android:clickable="true"

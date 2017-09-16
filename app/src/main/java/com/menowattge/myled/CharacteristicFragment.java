@@ -94,9 +94,6 @@ public class CharacteristicFragment extends Fragment {
             }
         },2100);
 
-
-
-
     }
 
     public CharacteristicFragment() {

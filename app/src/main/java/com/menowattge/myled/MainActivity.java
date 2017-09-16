@@ -20,7 +20,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -103,6 +102,9 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     protected byte[] byteValue;
     // li uso poi nel fragment
     protected BluetoothDevice deviceAddress;
+    //gli spazi sono voluti per centrare la scritta...
+    protected String noDev = "nessun dispostivo rilevato";
+
 
 
 
@@ -130,7 +132,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         // lista che mostrerà a video i risultati della scansione
         listView = (ListView) findViewById(R.id.listView);
 
-        adapter=new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        adapter=new ArrayAdapter<>(this, R.layout.litst_text); // prima c'era la classica simple..1
         //casella di testo che mostra a video un avviso se non vengono rilevati dispositivi
         bleDevices = (TextView) findViewById(R.id.textView);
         counter = (TextView) findViewById(R.id.counter);
@@ -176,14 +178,14 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         progressBar = (ProgressBar)findViewById(R.id.progressBar2);
         progressBar.setVisibility(View.INVISIBLE);
 
-
+        // animazione che fa lampeggiare la scritta
         bleDevices.setText("premi scan");
         Animation anim = new AlphaAnimation(0.0f, 1.0f);
-        anim.setDuration(500); //You can manage the blinking time with this parameter
+        anim.setDuration(500); //intervallo di tempo del lampeggiamento
         anim.setStartOffset(20);
         anim.setRepeatMode(Animation.REVERSE);
         anim.setRepeatCount(Animation.INFINITE);
-        bleDevices.setTextColor(Color.BLUE);
+       // bleDevices.setTextColor(Color.BLUE);
         bleDevices.startAnimation(anim);
 
     }
@@ -499,6 +501,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
                 }
 
+
                 public void onFinish() {
                     // al termine del countdown,la progress bar circolare non è più visibile
                     progressBar.setAnimation(progressOut);
@@ -514,7 +517,15 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                     //numero di elementi presenti nella lista dei dispositivi scansionati es: 5
                     int numElementi = recentlySeen.size();
                     int x;
+
                     System.out.println("lista_rssi : "+rssiList);
+                    //se entrambe le liste sono vuote,nella lista viene indicata la mancata rilevazione dei dispositivi
+                    if(recentlySeen.isEmpty() && adapter.isEmpty()){
+                        adapter.insert("",0);
+                        adapter.insert(noDev,1);
+
+                        listView.setAdapter(adapter);
+                    }
 
                     //scorro la lista degli elementi scansionati
                     for(Object item : recentlySeen) {
@@ -545,7 +556,6 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
 
 
-
     public void startScanning() {
 
 
@@ -560,12 +570,11 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         //tengo traccia delle iterazioni della callback DEBUG
         //i++;
 
-        String noDev = "            nessun dispostivo rilevato";
+
 
         //eseguo il controllo basandomi sull'rssi : se non presente,non ci sono device nel range
         if (rssi.isEmpty()) {
-            adapter.insert(noDev,0);
-            listView.setAdapter(adapter);
+
            // bleDevices.setText(noDev);
 
 
@@ -802,6 +811,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
                         CharacteristicFragment fragment = (CharacteristicFragment)fm.findFragmentById(fragment_container);
                         UUID  uuId = characteristic.getUuid();
+                        System.out.println("UUUUID"+uuId);
                         //passo l'uuid al metodo definito del fragment
                         fragment.showUuid(uuId);
 

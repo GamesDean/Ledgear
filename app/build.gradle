@@ -8,6 +8,7 @@ android {
         applicationId "com.example.joelwasserman.androidbletutorial"
         minSdkVersion 23
         targetSdkVersion 24
+        multiDexEnabled = true
         versionCode 1
         versionName "1.0"
     }

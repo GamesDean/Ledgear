@@ -5,6 +5,9 @@
     <string name="press_scan">premere scan</string>
     <string name="connect">Connect</string>
     <string name="disconnect">Disconnect</string>
+    <string name="exit">exit</string>
+    <string name="invia">invia</string>
+    <string name="per_poter_utilizzare_l_app_ledgear_scannerizza_il_codice_qr_che_trovi_sotto_al_lemset">Per poter utilizzare l\'app Ledgear scannerizza il codice qr che trovi sotto al Lemset</string>
 
 
 </resources>

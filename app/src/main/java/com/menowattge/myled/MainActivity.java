@@ -58,6 +58,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
+import es.dmoral.toasty.Toasty;
 import pl.bclogic.pulsator4droid.library.PulsatorLayout;
 
 import static com.menowattge.myled.R.id.fragment_container;
@@ -67,20 +68,23 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
 {
 
-    // implementando le interfacce di Google Api Client posso costruire un oggetto che mi permette di
-    // poter avviare il gps direttamente dall'applicazione senza dover costringere l'utente ad effettuare questa
-    // operazione manualmente.
+    /*
+    *
+    * Implementando le interfacce di Google Api Client posso costruire un oggetto che mi permette di
+    * poter avviare il gps direttamente dall'applicazione senza dover costringere l'utente ad effettuare questa
+    * operazione manualmente.
+    *
+    */
+
+
     Fragment covEr;
     BluetoothManager btManager;
     BluetoothAdapter btAdapter;
     BluetoothLeScanner btScanner;
 
-    //sono due, uno grande iniziale, l'altro piccolo, sopra la listview
     static PulsatorLayout startScanningButton;
     static PulsatorLayout startScanningButtonBig;
     ProgressBar progressBar;
-
-
 
     TextView bleDevices;
     TextView counter;
@@ -89,8 +93,6 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     protected  ArrayList<String>recentlySeen = new ArrayList<>();
     protected  ArrayList<String>rssiList = new ArrayList<>();
 
-    private boolean stoP=true;
-    private boolean starT=false;
     private int i=0;
     protected String rssi = "";
     private String device = "";
@@ -99,13 +101,23 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     private final static int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
-    protected byte[] byteValue;
-    // li uso poi nel fragment
+    protected byte[] byteValue ;
+    protected byte programma=0;
+    protected byte potenza=0;
+
+    // li uso nel fragment
     protected BluetoothDevice deviceAddress;
-    //gli spazi sono voluti per centrare la scritta...
     protected String noDev = "nessun dispostivo rilevato";
 
+    private final static String TAG = MainActivity.class.getSimpleName();
+    protected BluetoothGatt mGatt;
+    public UUID uuId,charUuid;
+    protected int x=0;
+    protected int j=0;
 
+    private final static UUID BATTERY_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
+    private final static UUID BATTERY_LEVEL = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
+    private Handler mHandler;
 
 
     @Override
@@ -115,7 +127,6 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         getFragmentManager().popBackStack();
         startScanningButton.setAnimation(animScaleUp);
         startScanningButton.setVisibility(View.VISIBLE);
-        //startScanning();
     }
 
     @Override
@@ -132,11 +143,10 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         // lista che mostrerà a video i risultati della scansione
         listView = (ListView) findViewById(R.id.listView);
 
-        adapter=new ArrayAdapter<>(this, R.layout.litst_text); // prima c'era la classica simple..1
-        //casella di testo che mostra a video un avviso se non vengono rilevati dispositivi
+        adapter=new ArrayAdapter<>(this, R.layout.litst_text);
+        // casella di testo che mostra a video un avviso se non vengono rilevati dispositivi
         bleDevices = (TextView) findViewById(R.id.textView);
         counter = (TextView) findViewById(R.id.counter);
-
 
         startScanningButton = (PulsatorLayout) findViewById(R.id.StartScanButton);
         startScanningButton.setEnabled(false);
@@ -146,7 +156,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
         final Animation animScaleUpBig = android.view.animation.AnimationUtils.loadAnimation(startScanningButtonBig.getContext(),  R.anim.scale_up);
 
-        //imposto l'animazione
+        // imposto l'animazione
         startScanningButtonBig.startAnimation(animScaleUpBig);
 
 
@@ -181,12 +191,11 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         // animazione che fa lampeggiare la scritta
         bleDevices.setText("premi scan");
         Animation anim = new AlphaAnimation(0.0f, 1.0f);
-        anim.setDuration(500); //intervallo di tempo del lampeggiamento
+        anim.setDuration(500); // intervallo di tempo del lampeggiamento
         anim.setStartOffset(20);
         anim.setRepeatMode(Animation.REVERSE);
         anim.setRepeatCount(Animation.INFINITE);
-       // bleDevices.setTextColor(Color.BLUE);
-        bleDevices.startAnimation(anim);
+         bleDevices.startAnimation(anim);
 
     }
 
@@ -196,18 +205,18 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     @Override
     protected void onResume() {
         super.onResume();
-        //gps
-        //genero a runtime un intero random per evitare il crash dovuto all'utilizzo dello stesso GoogleApiClientId
+        // gps
+        // genero a runtime un intero random per evitare il crash dovuto all'utilizzo dello stesso GoogleApiClientId
         Random rand = new Random();
         int maxGapiClientId = 50000;
         int minGapiClientId = 1;
         int gapiClientId = rand.nextInt(maxGapiClientId) + minGapiClientId;
 
-        //creo l'oggetto poi lo passo al metodo sottostante che controlla lo stato del GPS
+        // creo l'oggetto poi lo passo al metodo sottostante che controlla lo stato del GPS
         GoogleApiClient gapiClient = setGoogleApiClient(gapiClientId);
         locationChecker(gapiClient, MainActivity.this);
 
-        //bt
+        // bt
         ActivateBluetooth(btAdapter);
 
     }
@@ -218,14 +227,20 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
-                        INIZIO SEZIONE DEDICATA ALLE CONNESSIONI BLUETOOTH E GPS
+                                    -- INIZIO SEZIONE DEDICATA ALLE CONNESSIONI BLUETOOTH E GPS --
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
      */
 
 
-    // metodo che crea l'oggetto per poter comunicare all'utente di dover attivare il GPS internamente all'app
+
+    /**
+     *  Creates the GAPI Client Object for let the user toggle the GPS on inside the application
+     *
+     * @param gapiClientId
+     * @return
+     */
     public GoogleApiClient setGoogleApiClient(int gapiClientId) {
 
         GoogleApiClient mGoogleApiClient = new GoogleApiClient
@@ -239,7 +254,10 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         return mGoogleApiClient;
     }
 
-    //metodo che propone all'utente di attivare il bt --onResume()--
+    /**
+     * Prompt user to enable the Bluetooth
+     * @param btAdapter
+     */
     public void ActivateBluetooth(BluetoothAdapter btAdapter) {
 
         if (btAdapter != null && !btAdapter.isEnabled()) {
@@ -248,18 +266,20 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         }
     }
 
-    //metodo che,all'installazione e primo avvio dell'app,chiede i permessi per poter utilizzare il GPS --onCreate()--
+
+    /**
+     * Ask for GPS permission, just once (first install only)
+     */
     public void CheckPermission() {
 
         if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("This app needs location access");
-            builder.setMessage("Please grant location access so this app can detect peripherals.");
+            builder.setTitle("L'app ha bisogno della geolocalizzazione attiva per funzionare");
+            builder.setMessage(" Consenti di attivare la geolocalizzazione affinchè l'app possa rilveare i dispositivi.");
             builder.setPositiveButton(android.R.string.ok, null);
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
-                    //   requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
                     requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
                 }
             });
@@ -291,15 +311,12 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                 final LocationSettingsStates state = result.getLocationSettingsStates();
                 switch (status.getStatusCode()) {
                     case LocationSettingsStatusCodes.SUCCESS:
-                        // All location settings are satisfied. The client can initialize location
-                        // requests here.
+                        // All location settings are satisfied. The client can initialize location requests here.
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                        // Location settings are not satisfied. But could be fixed by showing the user
-                        // a dialog.
+                        // Location settings are not satisfied. But could be fixed by showing the user a dialog.
                         try {
-                            // Show the dialog by calling startResolutionForResult(),
-                            // and check the result in onActivityResult().
+                            // Show the dialog by calling startResolutionForResult(),and check the result in onActivityResult().
                             status.startResolutionForResult(
                                     activity, 1000);
                         } catch (IntentSender.SendIntentException e) {
@@ -307,27 +324,32 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         }
                         break;
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                        // Location settings are not satisfied. However, we have no way to fix the
-                        // settings so we won't show the dialog.
+                        // Location settings are not satisfied. However, we have no way to fix the settings so we won't show the dialog.
                         break;
                 }
             }
         });
     }
 
-
-    // Override del metodo che gestisce i permessi accordati dall'utente
+    /**
+     *
+     * Checks and prompt user the permissions needed by the app to work properly
+     *
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     *
+     */
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode,String permissions[],int[] grantResults) {
         switch (requestCode) {
             case PERMISSION_REQUEST_COARSE_LOCATION: {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    System.out.println("coarse location permission granted");
+                    System.out.println("Permessi accordati");
                 } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("Funzionalità Limitata");
-                    builder.setMessage("Permessi non concessi, l'app non sarà in grado di scandire la rete e trovare dispositivi in background.");
+                    builder.setMessage("Permessi non concessi");
                     builder.setPositiveButton(android.R.string.ok, null);
                     builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
 
@@ -352,13 +374,11 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
-                                    - FINE - SEZIONE DEDICATA ALLE CONNESSIONI BLUETOOTH E GPS
+                                    END -- SEZIONE DEDICATA ALLE CONNESSIONI BLUETOOTH E GPS --
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
      */
-
-
 
 
 
@@ -368,82 +388,74 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
-                                            INIZIO SEZIONE DEDICATA ALLA SCANSIONE
+                                           -- INIZIO SEZIONE DEDICATA ALLA SCANSIONE --
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
      */
 
-    // Device scan callback
 
+    /**
+     *  Scans and filters the results
+     */
 
     private ScanCallback leScanCallback = new ScanCallback() {
 
         @Override
         public void onScanResult(int callbackType, final ScanResult result) {
-
             super.onScanResult(callbackType,result);
-
             device = "Nome : " + result.getDevice().getName();
-            rssi = " - RSSI : " + result.getRssi() ;
+            rssi = " - RSSI : " + result.getRssi();
 
-            //indirizzo esadecimale del dispositivo
+            // indirizzo esadecimale del dispositivo
             deviceAddress = btAdapter.getRemoteDevice(result.getDevice().getAddress());
-            //ad ogni iterazione della callback aggiorno la lista dei dispositivi aggiungendo tutto ciò
-            //che viene rilevato dalla scansione, anche i doppioni
+            // ad ogni iterazione della callback aggiorno la lista dei dispositivi aggiungendo tutto ciò
+            // che viene rilevato dalla scansione, anche i doppioni
             recentlySeen.add(device);
 
-            // Set è una struttura dati che non ammette doppioni, la riempio con i dati raccolti
-            //così in automatico vengono eliminate le entrate multiple.
+            // "noDuplicates" è una struttura dati che non ammette doppioni, la riempio con i dati raccolti
+            // in questo modo vengono eliminate le entrate multiple.
             Set<String> noDuplicates = new LinkedHashSet<String>(recentlySeen);
-            //svuoto la lista
+            // svuoto la lista
             recentlySeen.clear();
-            //riempio nuovamente la lista ma con i dati privi di entrate multiple
+            // riempio nuovamente la lista ma con i dati privi di entrate multiple
             recentlySeen.addAll(noDuplicates);
 
 
             // serve a contenere i dati dell'iterazione precedente ed eiliminare i ripetuti
             Set<String> onlyRssi = new LinkedHashSet<>(rssiList);
-            //svuoto la lista degli rssi contenente i dati ripetuti
+            // svuoto la lista degli rssi contenente i dati ripetuti
             rssiList.clear();
             // ora che la lista è vuota,aggiungo
             rssiList.add(rssi);
-            //riaggiungo alla lista(che in questo frangente contiene i dati della scansione avvenuta)i dati presenti in onlyRssi
+            // riaggiungo alla lista(che in questo frangente contiene i dati della scansione avvenuta)i dati presenti in onlyRssi
             rssiList.addAll(onlyRssi);
 
-            // --> a questo punto avrò dei valori senza doppioni <--
-
-
+            // --> a questo punto avrò dei valori senza doppioni <-- //
 
             System.out.println("lista :"+recentlySeen);
             System.out.println("rssi_list :"+rssiList);
             System.out.println("deviceAddress : "+deviceAddress);
 
-
-
-
             if(!device.isEmpty()) {
-               // imposta il testo a vuoto
-                //TODO : indeciso se far comparire la scritta "rilevati dispositivi"
                 bleDevices.setText("");
-
                 handLer.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        //svuoto i valori di "rssi" al termine della scansione per poter effettuare i controlli allo start
+                        // svuoto i valori di "rssi" al termine della scansione per poter effettuare i controlli allo start
                         rssi ="";
                     }
                 }, SCAN_PERIOD);
             }
 
 
-            //fondamentale
+            // fondamentale
             mGatt = null;
 
-            //animazione pulsante piccolo
+            // animazione pulsante piccolo
             final Animation animScaleDown = android.view.animation.AnimationUtils.loadAnimation(startScanningButton.getContext(),  R.anim.scale_down);
 
-
+            // gestisco il click sulla lista
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -451,7 +463,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
                         covEr = new CharacteristicFragment();
                         FragmentTransaction transaction=getFragmentManager().beginTransaction();
-                        //animazione per il fragment
+                        // animazione per il fragment
                         transaction.setCustomAnimations(android.R.animator.fade_in,android.R.animator.fade_out);
                         // con replace sostituisco il layout del main con quello del fragment
                         transaction.replace(fragment_container,covEr);
@@ -459,11 +471,15 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         transaction.addToBackStack(null);
                         transaction.commit();
 
-                        //nel dubbio disabilito i pulsanti, altrimenti si  creano conflitti
+                        // nel dubbio disabilito i pulsanti, altrimenti si  creano conflitti
                         startScanningButtonBig.setEnabled(false);
                         startScanningButton.setEnabled(false);
-                        //animazione che rende non visibile il pulsante piccolo
+                        // animazione che rende non visibile il pulsante piccolo
                         startScanningButton.startAnimation(animScaleDown);
+                        startScanningButton.setVisibility(View.INVISIBLE);
+                        // disabilito la lista stessa
+                        listView.setEnabled(false);
+                        listView.setVisibility(View.INVISIBLE);
 
 
                 }
@@ -471,115 +487,94 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
 
         }
-    };
+    }; // ************************************************ end ScanCallback ************************************************//
 
 
 
-     CountDownTimer countdown = null;
-    // contatore,appare un countdown di 4 sec
-
-
-    public void counTer(boolean flaG) {
-    //se passo start(false)
+    /**
+     * This method contains the logic behind the way the list is populated.
+     * It also let the items disappear/appear on the display depending by the user interaction
+     */
+    public void counTer() {
 
         final Animation animFadeInList = android.view.animation.AnimationUtils.loadAnimation(listView.getContext(),  android.R.anim.fade_in);
         final Animation animScaleUp = android.view.animation.AnimationUtils.loadAnimation(startScanningButton.getContext(),  R.anim.scale_up);
         final Animation progressOut = android.view.animation.AnimationUtils.loadAnimation(progressBar.getContext(),  android.R.anim.fade_out);
 
-// TODO : probabile le istruzioni condizionali ed il parametro booleano non servano più - passare le animazioni come parametro se possibile
-
-        if(!flaG) {
-
-            countdown = new CountDownTimer(SCAN_PERIOD, 1000) {
+        CountDownTimer c = new CountDownTimer(SCAN_PERIOD, 1000) {
 
                 public void onTick(long millisUntilFinished) {
                     counter.setText("wait: " + millisUntilFinished / 1000);
-                    //durante la scansione, lista invisibile
+                    // durante la scansione, lista invisibile
                     listView.setVisibility(View.INVISIBLE);
-                    //torna visibile
+                    // torna visibile
                     progressBar.setVisibility(View.VISIBLE);
-
                 }
-
 
                 public void onFinish() {
                     // al termine del countdown,la progress bar circolare non è più visibile
                     progressBar.setAnimation(progressOut);
-                    //deve comunque essere presente altrimenti l'animazione non è stabile
+                    // deve comunque essere presente altrimenti l'animazione non è stabile
                     progressBar.setVisibility(View.INVISIBLE);
                     // al termine del countdown, appaiono con un'animazione il pulsante scan(little) e la listview
                     startScanningButton.setAnimation(animScaleUp);
                     startScanningButton.setVisibility(View.VISIBLE);
                     listView.setAnimation(animFadeInList);
                     listView.setVisibility(View.VISIBLE);
+                    listView.setEnabled(true);
                     counter.setText("");
 
-                    //numero di elementi presenti nella lista dei dispositivi scansionati es: 5
+                    // numero di elementi presenti nella lista dei dispositivi scansionati es: 5
                     int numElementi = recentlySeen.size();
                     int x;
 
                     System.out.println("lista_rssi : "+rssiList);
-                    //se entrambe le liste sono vuote,nella lista viene indicata la mancata rilevazione dei dispositivi
+                    // se entrambe le liste sono vuote,nella listView viene indicata la mancata rilevazione dei dispositivi
                     if(recentlySeen.isEmpty() && adapter.isEmpty()){
                         adapter.insert("",0);
                         adapter.insert(noDev,1);
-
                         listView.setAdapter(adapter);
                     }
 
-                    //scorro la lista degli elementi scansionati
+                    // scorro la lista degli elementi scansionati
                     for(Object item : recentlySeen) {
-                        x = numElementi--;  // decremento subito perchè parte da 0 nell'array
-                        // ottengo l'rssi corrispondente al device
-                        //basandomi sulla posizione che entrambi ricoprono nei rispettivi array
-                        // es  deviceArray[3] <--> rssiArray[3]
-                        String lastRssi = rssiList.get(x);
-                        adapter.add(item+lastRssi);
-                        listView.setAdapter(adapter);
+                        if(item.equals("Nome : BlueNRG_Chat")||(item.equals("Nome : Lemset"))) {
+                            x = numElementi--;  // decremento subito perchè parte da 0 nell'array
+                            // ottengo l'rssi corrispondente al device
+                            // basandomi sulla posizione che entrambi ricoprono nei rispettivi array
+                            // es : deviceArray[3] <--> rssiArray[3]
+                            String lastRssi = rssiList.get(x);
+                            adapter.add(item + lastRssi);
+                            listView.setAdapter(adapter);
+                        }/*
+                        else{ // se rileva dispositivi Bluetooth che non sono Lemset ( o schede ST di prova )
+                            adapter.insert("",0);
+                            adapter.insert("nessun Lemset rilevato",1);
+                            listView.setAdapter(adapter);
+                        }*/
 
                     }
                 }
 
-
             }.start();
 
         }
-        // TODO : eliminare dato che stop non c'è più
-        //se passo stop(true)
-        else if (flaG){
-            countdown.cancel();
-            countdown.onFinish();
-        }
-
-
-    }
 
 
 
+    /**
+     * This method starts the scan operation, it also invokes counter().
+     * After four seconds an handler stops the scanning operation
+     */
     public void startScanning() {
 
+        // avvia il contatore
+        counTer();
 
-        //avvia il contatore
-        counTer(starT);
-
-        //alla pressione del tasto "scan" in primis ripulisco l'adapter e la lista dei recenti
+        // alla pressione del tasto "scan" in primis ripulisco l'adapter e la lista dei recenti
         adapter.clear();
         recentlySeen.clear();
         rssiList.clear();
-
-        //tengo traccia delle iterazioni della callback DEBUG
-        //i++;
-
-
-
-        //eseguo il controllo basandomi sull'rssi : se non presente,non ci sono device nel range
-        if (rssi.isEmpty()) {
-
-           // bleDevices.setText(noDev);
-
-
-        }
-
 
         // task che avvia la scansione
         AsyncTask.execute(new Runnable() {
@@ -593,7 +588,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         });
 
 
-        //maniglia che stoppa la scansione in automatico  dopo 4 secondi
+        // maniglia che stoppa la scansione in automatico  dopo 4 secondi
         handLer.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -602,11 +597,11 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                 startScanningButton.setEnabled(true);
                 startScanningButton.start();
 
-
             }
         }, SCAN_PERIOD);
 
     }
+
 
 
 
@@ -634,51 +629,69 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
-                                            FINE SEZIONE DEDICATA ALLA SCANSIONE
+                                           -- FINE SEZIONE DEDICATA ALLA SCANSIONE --
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
      */
+
 
     /*
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
-                                            INIZIO SEZIONE DEDICATA ALLA CONNESSIONE
+                                           -- INIZIO SEZIONE DEDICATA ALLA CONNESSIONE --
      *
      * --------------------------------------------------------------------------------------------------------------------
      *
      */
 
 
-    private final static String TAG = MainActivity.class.getSimpleName();
-    protected BluetoothGatt mGatt;
-    public UUID uuId,charUuid;
-    int x=0;
 
 
-
-    // inizia la procedura di connessione
+    /**
+     *
+     * Let the app connect to the selected device
+     *
+     * @param device
+     * @return
+     *
+     */
     public BluetoothGatt connectToDevice(BluetoothDevice device) {
-      if (mGatt == null) {
+      if (mGatt == null)
+      {
             mGatt = device.connectGatt(this, false, gattCallback);
       }
-        return mGatt;  // AGGIUNTO OGGI COSI' LO PASSO A QUESTO QUI SOTTO
+        return mGatt;
     }
 
+    /**
+     *
+     * Let the app disconnect from the previously connected device
+     *
+     * @param mGatt
+     *
+     */
     public void discConnectToDevice(BluetoothGatt mGatt) {
         mGatt.disconnect();
     }
 
 
-    //
-
-
+    /**
+     * Gatt callback containing methods for a bidirectional communication
+     */
     protected final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+
+        /**
+         *Detect the device connection status
+         *
+         * @param gatt
+         * @param status
+         * @param newState
+         */
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             switch (newState) {
-
                 case BluetoothProfile.STATE_CONNECTED:
                     Log.i(TAG, "Connected to GATT server.");
                     Log.i(TAG, "Attempting to start service discovery:" + mGatt.discoverServices());
@@ -694,95 +707,216 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
         }
 
-
-
-            @Override
-            public void onServicesDiscovered ( final BluetoothGatt gatt, int status){
+        /**
+         * Controls the workflow of the two spinners and the button.
+         * Contains the proper click listeners of these items
+         * @param gatt
+         * @param status
+         */
+        @Override
+        public void onServicesDiscovered ( final BluetoothGatt gatt, int status){
                 List<BluetoothGattService> services = gatt.getServices();
-                // Log.i("onServicesDiscovered", services.toString());
-
-                // gatt.readCharacteristic(services.get(1).getCharacteristics().get(0));
-
-
                 uuId = services.get(1).getUuid();
                 charUuid = services.get(1).getCharacteristics().get(0).getUuid();
-
                 readCharacteristic(uuId, charUuid);
 
-                //ottengo un'istanza del fragment
-                android.app.FragmentManager fm = getFragmentManager();
+            // batteria
+                for (BluetoothGattService service : services) {
 
+                    if (service.getUuid().equals(BATTERY_UUID)) {
+                        Log.d("SERVICE", String.valueOf(service.getUuid()));
+
+                        BluetoothGattCharacteristic characteristic = service.getCharacteristic(BATTERY_LEVEL);
+
+                        if (characteristic != null) {
+                            mGatt.readCharacteristic(characteristic);
+
+                        }
+                    }
+                }
+             ////////
+
+                // ottengo un'istanza del fragment
+                android.app.FragmentManager fm = getFragmentManager();
                 final CharacteristicFragment fragment = (CharacteristicFragment) fm.findFragmentById(fragment_container);
-                //animazione pulsante invia
+                // animazione pulsante invia
                 final Animation anim = android.view.animation.AnimationUtils.loadAnimation(fragment.invia.getContext(),  R.anim.shake);
                 final Animation animDue = android.view.animation.AnimationUtils.loadAnimation(fragment.invia.getContext(),  android.R.anim.slide_in_left);
-
-                //suggerimento dello spinner se utilizzo il menù a tendina
+                // suggerimento dello spinner se utilizzo il menù a tendina -> non lo utilizzo ma lo lascio ugualmente
                 fragment.spinnerDue.setPrompt(fragment.selezionaProgramma);
 
 
-
-
+                // spinner per la selezione del profilo
                 fragment.spinnerDue.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+                    // ----- GESTIONE ANIMAZIONI ED EVENTI SPINNER PROFILO ----- //
+
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                         String item = (String) fragment.adapter.getItem(position);
 
-
-
-                        //per farlo fare solo alla prima iterazione
-
+                        // solo alla prima iterazione
                         if(x==0) {
+                            // appare lo spinner della potenza
+                            fragment.spinnerPower.setVisibility(View.VISIBLE);
+                        }
+                        x++;
+
+                        // all'indice zero c'è un hint
+                        if(item.equals(fragment.adapter.getItem(0))) {
+                            Toasty.info(getApplicationContext(),"seleziona un programma",Toast.LENGTH_SHORT).show();
+                            //quando l'utente rimane sull'hint, il programma vale zero, un parametro non valido
+                            programma = 0;
+                        }
+
+                        fragment.invia.setProgress(0);
+
+                    // ----- END GESTIONE ANIMAZIONI ED EVENTI SPINNER PROFILO ----- //
+
+                        // programma scelto dall'utente dallo spinner
+                        String progUno = fragment.programmaUno;
+                        String progDue = fragment.programmaDue;
+                        String progTre = fragment.programmaTre;
+                        String progQuattro = fragment.programmaQuattro;
+                        String progCinque = fragment.programmaCinque;
+                        String progSei = fragment.programmaSei;
+                        String progSette = fragment.programmaSette;
+                        String progOtto = fragment.programmaOtto;
+                        String progNove = fragment.programmaNove;
+                        String progDieci = fragment.programmaDieci;
+                        String progUndici = fragment.programmaUndici;
+                        String progDodici = fragment.programmaDodici;
+                        String progTredici = fragment.programmaTredici;
+                        String progQuattordici = fragment.programmaQuattordici;
+                        String progQuindici = fragment.programmaQuindici;
+                        String progSedici = fragment.programmaSedici;
+                        String progDiciassette = fragment.programmaDiciassette;
+                        String progDiciotto = fragment.programmaDiciotto;
+                        String progDiciannove = fragment.programmaDiciannove;
+                        // immagini
+                        int p1 = R.mipmap.p_1_23m2;int p2 = R.mipmap.p_2_23m3;int p3 = R.mipmap.p_3_22m2;
+                        int p4 = R.mipmap.p_4_22m3;int p5 = R.mipmap.p_5_erp;int p6 = R.mipmap.p_6_emx;
+                        int p7 = R.mipmap.p_7_23emp;int p8 = R.mipmap.p_8_22emp;int p9 = R.mipmap.p_9_23erp;
+                        int p10 = R.mipmap.p_10_22erp;int p11 = R.mipmap.p_11_23m2s2;int p12 = R.mipmap.p_12_23m3s2;
+                        int p13 = R.mipmap.p_13_22m2s2;int p14 = R.mipmap.p_14_22m3s2;int p15 = R.mipmap.p_15_lsm2;
+                        int p16 = R.mipmap.p_16_lsm3;int p17 = R.mipmap.p_17_lsm2s2;int p18 = R.mipmap.p_18_lsm3s2;
+                        int p19 = R.mipmap.p_19_r400;
+
+                        byte[] value = new byte[]{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
+
+                        // value è un byte,gli attribuisco il valore idoneo al click
+                        setProgram(item,progUno,fragment,p1,value[0]);
+                        setProgram(item,progDue,fragment,p2,value[1]);
+                        setProgram(item,progTre,fragment,p3,value[2]);
+                        setProgram(item,progQuattro,fragment,p4,value[3]);
+                        setProgram(item,progCinque,fragment,p5,value[4]);
+                        setProgram(item,progSei,fragment,p6,value[5]);
+                        setProgram(item,progSette,fragment,p7,value[6]);
+                        setProgram(item,progOtto,fragment,p8,value[7]);
+                        setProgram(item,progNove,fragment,p9,value[8]);
+                        setProgram(item,progDieci,fragment,p10,value[9]);
+                        setProgram(item,progUndici,fragment,p11,value[10]);
+                        setProgram(item,progDodici,fragment,p12,value[11]);
+                        setProgram(item,progTredici,fragment,p13,value[12]);
+                        setProgram(item,progQuattordici,fragment,p14,value[13]);
+                        setProgram(item,progQuindici,fragment,p15,value[14]);
+                        setProgram(item,progSedici,fragment,p16,value[15]);
+                        setProgram(item,progDiciassette,fragment,p17,value[16]);
+                        setProgram(item,progDiciotto,fragment,p18,value[17]);
+                        setProgram(item,progDiciannove,fragment,p19,value[18]);
+
+                        //------------------>> inserisco nell'array la coppia di valori <<-------------------
+
+                        byteValue=new byte[]{programma,potenza};
+
+                        //------------------>> inserisco nell'array la coppia di valori <<-------------------
+
+                    } // end spinner profilo
+
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                    }
+                });
+
+
+                // spinner per la selezione della potenza
+                fragment.spinnerPower.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+
+                    // ----- GESTIONE ANIMAZIONI ED EVENTI SPINNER POTENZA -----//
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        String item = (String) fragment.adapterPower.getItem(position);
+
+                        // soltanto alla prima iterazione, compare il pulsante "invia"
+                        if(j==0) {
                             fragment.invia.startAnimation(animDue);
                             fragment.invia.setVisibility(View.VISIBLE);
                             fragment.textView.setVisibility(View.VISIBLE);
                         }
-                        x++;
+                        j++;
 
-                        //azzero la barra circolare del progresso
-                        fragment.invia.setProgress(0);
-
-                        //ad ogni selezione parte l'animazione che fa capire di dover cliccare il pulsante
-                        if(item!=fragment.adapter.getItem(0)) {
+                        // se diverso dall'hint, parte l'animazione del pulsante
+                        if(item!=fragment.adapterPower.getItem(0)) {
                             fragment.invia.startAnimation(anim);
                         }else{
-                            Toast.makeText(getApplicationContext(),"seleziona un programma",Toast.LENGTH_SHORT).show();
+
+                            // quando l'utente rimane sull'hint, la potenza è zero, un parametro non valido
+                            potenza = 0;
                         }
 
-                        if(item.equals(fragment.programmaUno)){byteValue = new byte[]{1};}
-                        else if(item.equals(fragment.programmaDue)){byteValue = new byte[]{2};}
-                        else if(item.equals(fragment.programmaTre)){byteValue = new byte[]{3};}
-                        else if(item.equals(fragment.programmaQuattro)){byteValue = new byte[]{4};}
-                        else if(item.equals(fragment.programmaCinque)){byteValue = new byte[]{5};}
-                        else if(item.equals(fragment.programmaSei)){byteValue = new byte[]{6};}
-                        else if(item.equals(fragment.programmaSette)){byteValue = new byte[]{7};}
-                        else if(item.equals(fragment.programmaOtto)){byteValue = new byte[]{8};}
-                        else if(item.equals(fragment.programmaNove)){byteValue = new byte[]{9};}
-                        else if(item.equals(fragment.programmaDieci)){byteValue = new byte[]{10};}
-                        else if(item.equals(fragment.programmaUndici)){byteValue = new byte[]{11};}
-                        else if(item.equals(fragment.programmaDodici)){byteValue = new byte[]{12};}
-                        else if(item.equals(fragment.programmaTredici)){byteValue = new byte[]{13};}
-                        else if(item.equals(fragment.programmaQuattordici)){byteValue = new byte[]{14};}
-                        else if(item.equals(fragment.programmaQuindici)){byteValue = new byte[]{15};}
-                        else if(item.equals(fragment.programmaSedici)){byteValue = new byte[]{16};}
-                        else if(item.equals(fragment.programmaDiciassette)){byteValue = new byte[]{17};}
-                        else if(item.equals(fragment.programmaDiciotto)){byteValue = new byte[]{18};}
-                        else if(item.equals(fragment.programmaDiciannove)){byteValue = new byte[]{19};}
+                        // azzero la barra circolare del progresso
+                        fragment.invia.setProgress(0);
 
+                    // ----- END GESTIONE ANIMAZIONI ED EVENTI SPINNER POTENZA -----
 
+                        // potenza è un byte,gli attribuisco il valore idoneo al click
+                        if(item.equals(fragment.potenzaQuattrocento)){potenza = 4;}
+                        else if(item.equals(fragment.potenzaCinqueCinquanta)){potenza = 5;}
+                        else if(item.equals(fragment.potenzaSeiCinquanta)){potenza = 6;}
+                        else if(item.equals(fragment.potenzaSettecento)){potenza = 7;}
+
+                        //------------------>> inserisco nell'array la coppia di valori <<-------------------
+
+                        byteValue=new byte[]{programma,potenza};
+
+                        //------------------>> inserisco nell'array la coppia di valori <<-------------------
+
+                        // gestisco l'evento click sul pulsante invia
                         fragment.invia.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
+                                // l'utente non ha scelto nulla ma è rimasto sull'hint
+                                if (programma == 0 || potenza == 0)
+                                {
+                                    Toasty.warning(getApplicationContext(),"valore non idoneo",Toast.LENGTH_SHORT).show();
+                                }
+                                else
+                                {
 
-                                fragment.invia.setProgress(100);
+                                    // al click,la corona circolare fa un giro completo, colorandosi.
+                                    fragment.invia.setProgress(100);
+                                    // dopo 3 secondi si resetta
+                                    fragment.invia.postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            fragment.invia.setProgress(0);
+                                        }
+                                    },3000);
 
 
-                                writeCharacteristic(uuId,charUuid,byteValue);
+                                    // ***** Data are sent to the Bluetooth device paired with the app *****
+                                    writeCharacteristic(uuId,charUuid,byteValue);
+                                    // ********************************************************************** //
 
-                                Toast.makeText(getApplicationContext(),
-                                        "ho inviato il numero : "+byteValue[0] ,Toast.LENGTH_LONG).show();
+                                    Toasty.success(getApplicationContext(),"dati inviati al Lemset",Toast.LENGTH_SHORT).show();
+
+                                }
                             }
+
                         });
+
+
                     }
 
                     @Override
@@ -794,26 +928,39 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         }
 
 
-
-
+        /**
+         * Reads the characteristic and try to get the proper UUID.
+         * Then calls showUuid(uuid)
+         *
+         * @param gatt
+         * @param characteristic
+         * @param status
+         *
+         */
         @Override
         public void onCharacteristicRead(final BluetoothGatt gatt,  final BluetoothGattCharacteristic characteristic, int status) {
             Log.i("onCharacteristicRead", characteristic.toString());
+
+            ///////////
 
             try {
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-
                         //ottengo un'istanza del fragment
                         android.app.FragmentManager fm = getFragmentManager();
 
                         CharacteristicFragment fragment = (CharacteristicFragment)fm.findFragmentById(fragment_container);
                         UUID  uuId = characteristic.getUuid();
                         System.out.println("UUUUID"+uuId);
-                        //passo l'uuid al metodo definito del fragment
+                        //passo l'uuid al metodo definito nel fragment
                         fragment.showUuid(uuId);
+
+                        final int batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+
+                        Toasty.info(getApplicationContext(),"livello batteria : "+batteryLevel+"%",Toast.LENGTH_SHORT).show();
+                        Log.d("BATTERY", "battery level: " + batteryLevel);
 
                     }
                 });
@@ -828,18 +975,54 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
 
 
-
-    };
-
+    }; // ************************************************ end gattCallback ************************************************//
 
 
 
+
+
+
+    /**
+     *
+     * Set the image to show and the value of the byte.
+     * Hide/Shows required items
+     *
+     * @param item
+     * @param progNumber
+     * @param fragment
+     * @param p_
+     * @param value
+     *
+     */
+
+    public void setProgram(String item, String progNumber, final CharacteristicFragment fragment,int p_,byte value){
+
+        if(item.equals(progNumber)){
+
+            Intent intent = new Intent(getApplicationContext(),SelectProgramImage.class);
+            intent.putExtra("valore",p_);
+            startActivity(intent);
+
+            programma = value;
+
+
+        }
+
+    }
+
+    /**
+     *
+     * Checks if all the properties and the services it needs are well configured and enstablished
+     * then reads the charachteristic of the paired device
+     * @param gatservice_uuid
+     * @param char_uuid
+     * @return
+     *
+     */
 
     public boolean readCharacteristic(UUID gatservice_uuid, UUID char_uuid){
 
-
             try{
-                //if(mBluetoothGatt==null || mBluetoothGattServiceList==null) return false;
                 BluetoothGattService bgs = mGatt.getService(gatservice_uuid);
                 if(bgs==null) return false;
                 BluetoothGattCharacteristic bgc = bgs.getCharacteristic(char_uuid);
@@ -859,11 +1042,21 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
     }
 
+    /**
+     *
+     * Checks if all the properties and the services it needs are well configured and enstablished
+     * then writes the charachteristic to the paired device
+     *
+     * @param gatservice_uuid
+     * @param char_uuid
+     * @param value
+     * @return
+     *
+     */
 
     public boolean writeCharacteristic(UUID gatservice_uuid,UUID char_uuid,byte[] value){
 
             try{
-                //if(mBluetoothGatt==null || mBluetoothGattServiceList==null) return false;
 
                 BluetoothGattService bgs = mGatt.getService(gatservice_uuid);
                 if(bgs==null){
@@ -906,4 +1099,6 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     }
 
 
-}
+
+
+} // main class

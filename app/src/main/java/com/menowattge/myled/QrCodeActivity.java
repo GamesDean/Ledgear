@@ -76,13 +76,7 @@ public class QrCodeActivity extends AppCompatActivity  implements ZXingScannerVi
          Log.v("risultato", rawResult.getText());
          Log.v("risultato_qrcodeformat", rawResult.getBarcodeFormat().toString()); // Prints the scan format (qrcode, pdf417 etc.)
 
-       // onBackPressed();
 
-   /*     if(rawResult!= null){
-            Intent intent = new Intent(getApplicationContext(),MainActivity.class);
-            startActivity(intent);
-        }
-*/
         if(rawResult.getText().equals(menowattCode)){
             Intent intent = new Intent(getApplicationContext(),MainActivity.class);
             // Toast.makeText(getApplicationContext(),"codice valido : login in corso",Toast.LENGTH_SHORT).show();

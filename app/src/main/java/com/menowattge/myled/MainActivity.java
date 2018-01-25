@@ -93,7 +93,6 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     protected  ArrayList<String>recentlySeen = new ArrayList<>();
     protected  ArrayList<String>rssiList = new ArrayList<>();
 
-    private int i=0;
     protected String rssi = "";
     private String device = "";
     private Handler handLer = new Handler();
@@ -256,7 +255,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
     /**
      * Prompt user to enable the Bluetooth
-     * @param btAdapter
+     * @param  btAdapter
      */
     public void ActivateBluetooth(BluetoothAdapter btAdapter) {
 
@@ -360,7 +359,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                     });
                     builder.show();
                 }
-                return;
+
             }
         }
     }
@@ -546,12 +545,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                             String lastRssi = rssiList.get(x);
                             adapter.add(item + lastRssi);
                             listView.setAdapter(adapter);
-                        }/*
-                        else{ // se rileva dispositivi Bluetooth che non sono Lemset ( o schede ST di prova )
-                            adapter.insert("",0);
-                            adapter.insert("nessun Lemset rilevato",1);
-                            listView.setAdapter(adapter);
-                        }*/
+                        }
 
                     }
                 }
@@ -941,7 +935,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         public void onCharacteristicRead(final BluetoothGatt gatt,  final BluetoothGattCharacteristic characteristic, int status) {
             Log.i("onCharacteristicRead", characteristic.toString());
 
-            ///////////
+            // batteria
 
             try {
 

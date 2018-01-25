@@ -21,12 +21,11 @@ public class SplashScreenActivity extends AppCompatActivity {
             super.run();
 
             try {
-                sleep(1 * 1000);  // messo 1 per comodità
+                sleep(1500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            //Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             Intent intent = new Intent(getApplicationContext(), PreQrCodeActivity.class);
             startActivity(intent);
             finish();

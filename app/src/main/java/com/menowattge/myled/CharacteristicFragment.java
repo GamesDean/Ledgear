@@ -84,9 +84,11 @@ public class CharacteristicFragment extends Fragment {
     protected String programmaDiciassette="Programma 17:LSM2S2";
     protected String programmaDiciotto="Programma 18:LSM3S2";
     protected String programmaDiciannove="Programma 19:R400";
+    protected String programmaVenti="Programma 20:22DMP";
 
     protected  String selezionaPotenza = ">corrente max<";
     protected  String potenzaQuattrocento ="400[mA]";
+    protected  String potenzaCinquecento = "500[mA]";
     protected  String potenzaCinqueCinquanta ="550[mA]";
     protected  String potenzaSeiCinquanta ="650[mA]";
     protected  String potenzaSettecento ="700[mA]";
@@ -239,14 +241,14 @@ public class CharacteristicFragment extends Fragment {
                         programmaUno,programmaDue,programmaTre,programmaQuattro,programmaCinque,programmaSei,
                         programmaSette, programmaOtto,programmaNove,programmaDieci,programmaUndici,programmaDodici,
                         programmaTredici, programmaQuattordici,programmaQuindici,programmaSedici,programmaDiciassette,
-                        programmaDiciotto,programmaDiciannove});
+                        programmaDiciotto,programmaDiciannove,programmaVenti});
 
         spinnerDue.setAdapter(adapter);
         
         // adapter che va a riempire lo spinner contenente la potenza
         adapterPower = new ArrayAdapter<>(getActivity(),R.layout.spinner_text,
                 new String[]{selezionaPotenza, // hint
-                        potenzaQuattrocento,potenzaCinqueCinquanta,potenzaSeiCinquanta,potenzaSettecento});
+                        potenzaQuattrocento,potenzaCinquecento,potenzaCinqueCinquanta,potenzaSeiCinquanta,potenzaSettecento});
 
         spinnerPower.setAdapter(adapterPower);
 

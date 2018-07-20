@@ -19,12 +19,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -180,7 +182,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         btManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         btAdapter = btManager.getAdapter();
 
-        CheckPermission();
+        //CheckPermission();
 
         listView.setVisibility(View.INVISIBLE);
 
@@ -194,7 +196,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         anim.setStartOffset(20);
         anim.setRepeatMode(Animation.REVERSE);
         anim.setRepeatCount(Animation.INFINITE);
-         bleDevices.startAnimation(anim);
+        bleDevices.startAnimation(anim);
 
     }
 
@@ -213,7 +215,10 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
         // creo l'oggetto poi lo passo al metodo sottostante che controlla lo stato del GPS
         GoogleApiClient gapiClient = setGoogleApiClient(gapiClientId);
-        locationChecker(gapiClient, MainActivity.this);
+
+       // if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        CheckPermission(gapiClient);
+
 
         // bt
         ActivateBluetooth(btAdapter);
@@ -269,23 +274,46 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     /**
      * Ask for GPS permission, just once (first install only)
      */
-    public void CheckPermission() {
+    public void CheckPermission(final GoogleApiClient gapiClient) {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        if (!prefs.contains("FirstTime")) {
+            // if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-        if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("L'app ha bisogno della geolocalizzazione attiva per funzionare");
-            builder.setMessage(" Consenti di attivare la geolocalizzazione affinchè l'app possa rilveare i dispositivi.");
-            builder.setPositiveButton(android.R.string.ok, null);
+            builder.setTitle("INFO Geolocalizzazione");
+            builder.setMessage(" In applicazione del Regolamento generale sulla protezione dei dati (GDPR)" +
+                    " del 27 aprile 2016 si dichiara all’utilizzatore dell’app, denominata LEDGEAR, che nessun " +
+                    "dato personale verrà archiviato e/o trasferito e/o sarà oggetto di proliferazione." +
+                    " Si dichiara, inoltre, che nessun dato geografico verrà archiviato e/o trasferito e/o" +
+                    " sarà oggetto di proliferazione." +
+                    "Si ricorda che l’uscita dall’app Ledgear rende non più necessario l’uso del Bluetooth e del circuito GPS: " +
+                    "per risparmiare energia si consiglia di disattivarli entrambi");
+            builder.setPositiveButton(R.string.ho_letto, null);
+
+
+
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
-                    requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
+                    // requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
+
+                    locationChecker(gapiClient, MainActivity.this);
+
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putBoolean("FirstTime",true);
+                    editor.commit();
+                    System.out.println("PRIMO AVVIO\n");
+
                 }
             });
-            builder.show();
-        }
-    }
 
+            builder.show();
+        }else{
+            System.out.println("SUCCESSIVI AVVII\n");
+            locationChecker(gapiClient, MainActivity.this);
+        }
+
+    }
 
     /**
      * Prompt user to enable GPS and Location Services
@@ -294,7 +322,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
      * @param activity
      */
     public static void locationChecker(GoogleApiClient mGoogleApiClient, final Activity activity) {
-        LocationRequest locationRequest = LocationRequest.create();
+        final LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(30 * 1000);
         locationRequest.setFastestInterval(5 * 1000);
@@ -313,6 +341,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         // All location settings are satisfied. The client can initialize location requests here.
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+
                         // Location settings are not satisfied. But could be fixed by showing the user a dialog.
                         try {
                             // Show the dialog by calling startResolutionForResult(),and check the result in onActivityResult().
@@ -787,6 +816,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         String progDiciassette = fragment.programmaDiciassette;
                         String progDiciotto = fragment.programmaDiciotto;
                         String progDiciannove = fragment.programmaDiciannove;
+                        String progVenti = fragment.programmaVenti;
                         // immagini
                         int p1 = R.mipmap.p_1_23m2;int p2 = R.mipmap.p_2_23m3;int p3 = R.mipmap.p_3_22m2;
                         int p4 = R.mipmap.p_4_22m3;int p5 = R.mipmap.p_5_erp;int p6 = R.mipmap.p_6_emx;
@@ -794,9 +824,11 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         int p10 = R.mipmap.p_10_22erp;int p11 = R.mipmap.p_11_23m2s2;int p12 = R.mipmap.p_12_23m3s2;
                         int p13 = R.mipmap.p_13_22m2s2;int p14 = R.mipmap.p_14_22m3s2;int p15 = R.mipmap.p_15_lsm2;
                         int p16 = R.mipmap.p_16_lsm3;int p17 = R.mipmap.p_17_lsm2s2;int p18 = R.mipmap.p_18_lsm3s2;
-                        int p19 = R.mipmap.p_19_r400;
+                        int p19 = R.mipmap.p_19_r400; int p20 = R.mipmap.p_20_22dmp;
 
-                        byte[] value = new byte[]{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19};
+
+
+                        byte[] value = new byte[]{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
 
                         // value è un byte,gli attribuisco il valore idoneo al click
                         setProgram(item,progUno,fragment,p1,value[0]);
@@ -818,6 +850,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         setProgram(item,progDiciassette,fragment,p17,value[16]);
                         setProgram(item,progDiciotto,fragment,p18,value[17]);
                         setProgram(item,progDiciannove,fragment,p19,value[18]);
+                        setProgram(item,progVenti,fragment,p20,value[19]);
 
                         //------------------>> inserisco nell'array la coppia di valori <<-------------------
 
@@ -869,6 +902,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         else if(item.equals(fragment.potenzaCinqueCinquanta)){potenza = 5;}
                         else if(item.equals(fragment.potenzaSeiCinquanta)){potenza = 6;}
                         else if(item.equals(fragment.potenzaSettecento)){potenza = 7;}
+                        else if(item.equals(fragment.potenzaCinquecento)){potenza = 8;} // aggiunto in un secondo momento
 
                         //------------------>> inserisco nell'array la coppia di valori <<-------------------
 

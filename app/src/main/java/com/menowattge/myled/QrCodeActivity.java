@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
@@ -22,50 +21,64 @@ public class QrCodeActivity extends AppCompatActivity  implements ZXingScannerVi
 
     private String  menowattCode = "User : Operator\n"+"Pass :  Ledgear";
 
-    @Override
-    protected void onCreate(Bundle state) {
 
-        super.onCreate(state);
-        // Programmatically initialize the scanner view
-        mScannerView = new ZXingScannerView(this);
-        setContentView(mScannerView);
-        mScannerView.startCamera();
+    public void CheckPermission() {
 
-        if (this.checkSelfPermission( android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+
+        if (this.checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
 
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Questa app deve poter accedere alla fotocamera");
             builder.setMessage("Consentire all'app l'accesso alla fotocamera affinchè possa scansionare il qrcode.");
             builder.setPositiveButton(android.R.string.ok, null);
 
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,android.Manifest.permission.CAMERA)) {
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    requestPermissions(new String[]{android.Manifest.permission.CAMERA}, 1);
 
 
-            } else {
-                builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialog) {
-                        requestPermissions( new String[]{android.Manifest.permission.CAMERA}, 1);                    }
-                });
-                builder.show();
-
-            }
-
-
+                }
+            });
+            builder.show();
         }
+
+
 
 
     }
 
+
+
+        @Override
+    protected void onCreate(Bundle state) {
+
+        super.onCreate(state);
+
+       // CheckPermission();
+
+        // Programmatically initialize the scanner view
+        mScannerView = new ZXingScannerView(this);
+        setContentView(mScannerView);
+        mScannerView.startCamera();
+
+
+
+    }
+
+
+
     @Override
     public void onResume() {
         super.onResume();
+        CheckPermission();
         mScannerView.setResultHandler(this); // Register ourselves as a handler for scan results.
         mScannerView.startCamera();          // Start camera on resume
     }
 
     @Override
     public void onPause() {
+
         super.onPause();
         mScannerView.stopCamera();           // Stop camera on pause
     }

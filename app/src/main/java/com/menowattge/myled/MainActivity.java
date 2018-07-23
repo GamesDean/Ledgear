@@ -220,6 +220,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         CheckPermission(gapiClient);
 
 
+
         // bt
         ActivateBluetooth(btAdapter);
 
@@ -274,6 +275,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     /**
      * Ask for GPS permission, just once (first install only)
      */
+
     public void CheckPermission(final GoogleApiClient gapiClient) {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -295,7 +297,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
             builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                 @Override
                 public void onDismiss(DialogInterface dialog) {
-                    // requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
+                    requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
 
                     locationChecker(gapiClient, MainActivity.this);
 
@@ -314,6 +316,10 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
         }
 
     }
+
+
+
+
 
     /**
      * Prompt user to enable GPS and Location Services
@@ -985,7 +991,24 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                         //passo l'uuid al metodo definito nel fragment
                         fragment.showUuid(uuId);
 
-                        final int batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+                       // final int batteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+
+
+                        BluetoothGattService batteryService = mGatt.getService(BATTERY_UUID);
+                        if(batteryService == null) {
+                            Log.d(TAG, "Battery service not found!");
+                            return;
+                        }
+
+                        BluetoothGattCharacteristic batteryLevel = batteryService.getCharacteristic(BATTERY_LEVEL);
+                        if(batteryLevel == null) {
+                            Log.d(TAG, "Battery level not found!");
+                            return;
+                        }
+                        mGatt.readCharacteristic(batteryLevel);
+                        Log.v(TAG, "batteryLevel = " + mGatt.readCharacteristic(batteryLevel));
+
+
 
                         Toasty.info(getApplicationContext(),"livello batteria : "+batteryLevel+"%",Toast.LENGTH_SHORT).show();
                         Log.d("BATTERY", "battery level: " + batteryLevel);

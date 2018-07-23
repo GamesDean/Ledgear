@@ -311,7 +311,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
             builder.show();
         }else{
-            System.out.println("SUCCESSIVI AVVII\n");
+            System.out.println("SUCCESSIVI AVVII_\n");
             locationChecker(gapiClient, MainActivity.this);
         }
 

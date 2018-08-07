@@ -30,6 +30,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
@@ -219,7 +220,20 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
        // if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
         CheckPermission(gapiClient);
 
+        // controllo le dimensioni del display : telefono o tablet
+        DisplayMetrics metrics = new DisplayMetrics();
+        this.getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
+        float yInches= metrics.heightPixels/metrics.ydpi;
+        float xInches= metrics.widthPixels/metrics.xdpi;
+        double diagonalInches = Math.sqrt(xInches*xInches + yInches*yInches);
+        if (diagonalInches>=6.5){
+            // 6.5inch device or bigger
+            System.out.println("TABLET");
+        }else{
+            // smaller device
+            System.out.println("PHONE");
+        }
 
         // bt
         ActivateBluetooth(btAdapter);
@@ -279,7 +293,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
     public void CheckPermission(final GoogleApiClient gapiClient) {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        if (!prefs.contains("FirstTime")) {
+        if (!prefs.contains("First")) {
             // if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             builder.setTitle("INFO Geolocalizzazione");
@@ -302,7 +316,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                     locationChecker(gapiClient, MainActivity.this);
 
                     SharedPreferences.Editor editor = prefs.edit();
-                    editor.putBoolean("FirstTime",true);
+                    editor.putBoolean("First",true);
                     editor.commit();
                     System.out.println("PRIMO AVVIO\n");
 
@@ -312,6 +326,8 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
             builder.show();
         }else{
             System.out.println("SUCCESSIVI AVVII_\n");
+            if (this.checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
             locationChecker(gapiClient, MainActivity.this);
         }
 
@@ -380,7 +396,8 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
             case PERMISSION_REQUEST_COARSE_LOCATION: {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     System.out.println("Permessi accordati");
-                } else {
+                }
+               /* else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("Funzionalità Limitata");
                     builder.setMessage("Permessi non concessi");
@@ -394,6 +411,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
                     });
                     builder.show();
                 }
+                */
 
             }
         }
@@ -1010,7 +1028,7 @@ public  class MainActivity extends AppCompatActivity implements GoogleApiClient.
 
 
 
-                        Toasty.info(getApplicationContext(),"livello batteria : "+batteryLevel+"%",Toast.LENGTH_SHORT).show();
+                      //  Toasty.info(getApplicationContext(),"livello batteria : "+batteryLevel+"%",Toast.LENGTH_SHORT).show();
                         Log.d("BATTERY", "battery level: " + batteryLevel);
 
                     }

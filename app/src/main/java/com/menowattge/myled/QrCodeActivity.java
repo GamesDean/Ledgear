@@ -1,7 +1,5 @@
 package com.menowattge.myled;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -25,8 +23,11 @@ public class QrCodeActivity extends AppCompatActivity  implements ZXingScannerVi
     public void CheckPermission() {
 
 
-        if (this.checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+        if (this.checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+            requestPermissions(new String[]{android.Manifest.permission.CAMERA}, 1);
+    }
 
+    /*
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Questa app deve poter accedere alla fotocamera");
             builder.setMessage("Consentire all'app l'accesso alla fotocamera affinchè possa scansionare il qrcode.");
@@ -42,12 +43,9 @@ public class QrCodeActivity extends AppCompatActivity  implements ZXingScannerVi
             });
             builder.show();
         }
-
-
-
-
     }
 
+*/
 
 
         @Override

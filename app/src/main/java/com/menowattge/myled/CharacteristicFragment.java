@@ -126,7 +126,7 @@ public class CharacteristicFragment extends Fragment {
                     fl.setAnimation(fadeOut);
                     fl.setVisibility(View.INVISIBLE);
                 }
-            }, 2500);
+            }, 2500);//2500
 
 
             // background appear
@@ -139,7 +139,7 @@ public class CharacteristicFragment extends Fragment {
 
                     time.setVisibility(View.VISIBLE);
                 }
-            }, 3000);
+            }, 3000);//3000
 
 
             // spinner appear
@@ -152,7 +152,7 @@ public class CharacteristicFragment extends Fragment {
                     spinnerDue.setVisibility(View.VISIBLE);
 
                 }
-            }, 3300);
+            }, 3300);//3300
 
         }else {
             Toasty.error(getActivity(), "connessione non avvenuta : premi exit e riprova", Toast.LENGTH_SHORT).show();
